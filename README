@@ -1,0 +1,23 @@
+Lecture notes about amortised analysis of algorithms
+
+Used as supplementary material to
+
+    R. Sewdgewick and K. Wayne, Algorithms, 4td ed., 2011
+
+COMPILE:
+
+make
+
+DEPENDENCIES:
+
+pdflatex (other latexes should work)
+Packages: tufte-handout, exercise
+
+ACKNOWLEDGEMENTS:
+
+The mechanical counter images are public domain hosted at Wikimedia
+Commons, with some cleanup.
+
+    http://commons.wikimedia.org/wiki/File:Zaehlwerk_Schema_1.jpg
+    http://commons.wikimedia.org/wiki/File:Zaehlwerk_Schema_2.jpg
+    Source: Brockhaus Konversations-Lexikon, Sechzehnter Band, 1895, page 908 ("Zählwerke")

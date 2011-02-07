@@ -1,5 +1,5 @@
 \documentclass{tufte-handout}
-\usepackage{tikz}\usetikzlibrary{decorations.pathreplacing,matrix}
+\usepackage{tikz}\usetikzlibrary{decorations.pathreplacing,positioning,chains}
 \usepackage{tipa}
 \usepackage{color}
 \usepackage{listings}
@@ -19,7 +19,6 @@
 \textbf{\ExerciseListName\ExerciseHeaderNB.}\ \ExerciseHeaderTitle%
 \ExerciseHeaderOrigin\ignorespaces}
 \renewcommand{\AnswerListHeader}{\textbf{\ExerciseHeaderNB.\ }}
-
 
 \title{Amortised analysis}
 \author{Thore Husfeldt}
@@ -42,15 +41,15 @@ Consider the resizing array implementation of {\tt Stack} (Algorithm
 1.1) and the collowing claim:
 
    
-\begin{quote} {\bf Proposition E1.} In the resizing array
+\begin{quote} {\bf Proposition A1.} In the resizing array
   implementation of {\tt Stack} (Algorithm 1.1), the average number of
   array accesses for any sequence of {\tt push()} operations starting
   from an empty data structure is constant in the worst case.
 \end{quote}
 
-This is a true statement, and proved in [SW].
+This is a true statement, and proved in [SW1].
 
-Is E1 still true when I remove ``starting from an empty data
+Is A1 still true when I remove ``starting from an empty data
 structure''?
 No.
 To see this, begin with a stack that is the result of $2^k-1$
@@ -60,13 +59,13 @@ From this starting position, a single {\tt push()} will will result in
 a {\tt resize()}, leading to a  number of array accesses that is
 linear in {\tt N}.
    
-Is E1 still true when I remove ``average''?
+Is A1 still true when I remove ``average''?
 No.
 The same example works.
    
-What we will do now is to show that E1 is still true when I remove
+What we will do now is to show that A1 is still true when I remove
 ``{\tt push()}''. 
-(This is exactly proposition E.)
+(This is exactly Proposition~E in [SW1].)
 Intuitively, this sounds reasonable, since {\tt pop()} only makes the
 stack smaller, whereas the expensive operation seems to happen when
 the stack grows and causes and expensive {\tt resize()}.
@@ -166,23 +165,26 @@ deposit 8 coins, {\tt pop()} shall deposit 4 coin.\footnote{If you
   for the array acccesses in its first two lines and puts the
   remainder in the pig.}
 
-The difficulty are the two internal calls to {\tt resize()}.  A call
-to {\tt resize(max)} requires $\mathtt{max}+ 2N$ array
+The difficulty are the two internal calls to {\tt resize()}.  
+A call to {\tt resize(max)} requires $\mathtt{max}+ 2N$ array
 accesses.\footnote{See the last Q\&A in section~1.4 for our convention
-  about the cost of {\tt new}.}  We can simplify this expression by
-observing that $\mathtt{max}=2N$ whenever {\tt resize()} is called. To
-see this, look at the condition to $\mathtt{if}$ in both calls
-to \texttt{resize()}: from inside \texttt{push()}, we have
-$\mathtt{max}= \mathtt{2*a.length} = 2N$, and from inside
-\texttt{pop()} we have $\mathtt{max}= \mathtt{a.length/2}= 2
-\mathtt{a.length/4} = 2N$. Thus, both calls of {\tt resize()} require
-$4N$ coins. We need to show that the pig can handle that.
+  about the cost of {\tt new}.}  
+We can simplify this expression by observing that $\mathtt{max}=2N$
+whenever {\tt resize()} is called.
+To see this, look at the condition to $\mathtt{if}$ in both calls to
+\texttt{resize()}: from inside \texttt{push()}, we have $\mathtt{max}=
+\mathtt{2*a.length} = 2N$, and from inside \texttt{pop()} we have
+$\mathtt{max}= \mathtt{a.length/2}= 2 \mathtt{a.length/4} = 2N$.
+Thus, both calls of {\tt resize()} require $4N$ coins.  
+We need to show that the pig can handle that.
 
-We need to consider the very first call of {\tt resize()}
-separately. This is an easy case. The data structure is initialised
-with $\mathtt{a.length}=1$ and $N=0$, and the first call of {\tt
-  resize()} must come from {\tt push()} when $N=1$. We need $4N=4$
-coins, and have just deposited $8$ coins, so the charge is easily paid.
+We need to consider the very first call of {\tt resize()} separately.
+This is an easy case.  
+The data structure is initialised with $\mathtt{a.length}=1$ and
+$N=0$, and the first call of {\tt resize()} must come from {\tt
+  push()} when $N=1$.  
+We need $4N=4$ coins, and have just deposited $8$ coins, so the charge
+is easily paid.
 
 Another easy observation will turn out to be useful, so I will pull
 that out of my hat as well:
@@ -252,11 +254,10 @@ in the bank.
 \end{itemize}
 This finishes the proof of proposition E.
 
-\begin{ExerciseList}\Exercise Can we charge all costs to
+\begin{ExerciseList}
+  \Exercise Can we charge all costs to
   \texttt{push()}? How much does it have to pay if \texttt{pop()} pays nothing?
-\end{ExerciseList}
-
-\begin{ExerciseList} \Exercise Can we charge all costs to
+  \Exercise Can we charge all costs to
   \texttt{pop()}? How much does it have to pay if \texttt{push()} pays nothing?
 \end{ExerciseList}
 
@@ -286,27 +287,84 @@ cells {\tt temp[1]} and {\tt temp[N+1]}, and the two accesses in {\tt
   temp[1] = a[1]}.
 
 \begin{marginfigure}
-  \begin{tikzpicture}[font=\tt,scale=.4]
-    \draw (0,0)
-          node[anchor=south east] {\texttt{a[]}}
-          rectangle (.4,.4) ;
-    \node (pop1) at (0,-1) [anchor=west] {pop()};
-    \draw (0,-2)
-          node[anchor=south east] {\texttt{a[]}};
-          \matrix[every node/.style={draw,inner sep=0pt,
-            minimum height=8pt, minimum width=15pt},
-          matrix of nodes,nodes in empty cells] {
-           to & be & or & not
-            &|[gray]|\textrm{\it null}
-            &\textrm{\it null}
-            &\textrm{\it null}
-            &\textrm{\it null}\\
-          };
-          grid +(8,1);
-    \node (pop2) [below of= pop1, anchor=west] {pop()};
-    \node (pop3) [below of= pop2, anchor=west] {pop()};
-  \end{tikzpicture}
-  [TODO]
+ %  \begin{tikzpicture}[font=\tt,scale=.4]
+%     \draw (0,0)
+%           node[anchor=south east] {\texttt{a[]}}
+%           rectangle (.4,.4) ;
+%     \node (pop1) at (0,-1) [anchor=west] {pop()};
+%     \draw (0,-2)
+%           node[anchor=south east] {\texttt{a[]}};
+%           \matrix[every node/.style={draw,inner sep=0pt,
+%             minimum height=8pt, minimum width=15pt},
+%           matrix of nodes,nodes in empty cells] {
+%            to & be & or & not
+%             &|[gray]|\textrm{\it null}
+%             &\textrm{\it null}
+%             &\textrm{\it null}
+%             &\textrm{\it null}\\
+%           };
+%           grid +(8,1);
+%     \node (pop2) [below of= pop1, anchor=west] {pop()};
+%     \node (pop3) [below of= pop2, anchor=west] {pop()};
+%   \end{tikzpicture}
+% %
+\tikzstyle{cell}=[draw,on chain,minimum width=6mm,
+  font=\tiny\tt, text height=1.25ex, text depth=.25ex]
+\tikzstyle{coin}=[draw,circle, inner sep= 1pt, fill=white,font=\tiny\sf]
+\begin{tikzpicture}
+\begin{scope}[start chain, node distance=0cm]
+  \node[on chain] {\tt\textcolor{red} a};
+  \foreach \word in {to, be, or, not} \node [cell]{\word};
+  \foreach \i in {4,...,7} \node [cell] {\it null};
+\end{scope}
+\node at (0,-1) [anchor=west]{\tt pop(); pop();} ;
+\begin{scope}[start chain, node distance=0cm]
+  \node at (0,-2) [on chain] {\tt\textcolor{red} a};
+  \foreach \word in {to, be} \node (a\word) [cell]{\word};
+  \foreach \i in {2,...,7} \node [cell](C\i) {\it null};
+\end{scope}
+\begin{scope}[start chain= going {at=(\tikzchainprevious),shift=(-40:.2)},node distance=0cm]
+\node (R2) [on chain,below of=C2, coin] {R};
+\node (W2) [on chain, coin] {W};
+\node (N21) [on chain, coin] {N};
+\node (N22) [on chain, coin] {N};
+\end{scope}
+\begin{scope}[start chain= going {at=(\tikzchainprevious),shift=(-40:.2)},node distance=0cm]
+\node (R3) [on chain,below of=C3, coin] {R};
+\node (W3) [on chain, coin] {W};
+\node (N31) [on chain, coin] {N};
+\node (N32) [on chain, coin] {N};
+\end{scope}
+\node at (0,-3) [anchor=west]{\tt Item[] temp = (Item []) new
+  Object[4]};
+\begin{scope}[start chain, node distance=0cm]
+  \node at (0,-4) [on chain] {\tt\textcolor{red} temp};
+  \foreach \i in {0,...,3} \node (NN\i) [cell] {\it null};
+\end{scope}
+\node at (0,-5) [anchor=west]{\tt temp[0] = a[0]; temp[1] = a[1]; };
+\begin{scope}[start chain, node distance=0cm]
+  \node at (0,-6) [on chain] {\tt\textcolor{red} temp};
+  \node (to) [cell] {to};   \node (be) [cell] {be};
+  \foreach \i in {2,...,3} \node [cell] {\it null};
+\end{scope}
+\draw [->,nearly transparent] (N21) to[out=270,in=90] (NN0);
+\draw [->,nearly transparent] (N22) to[out=270,in=90] (NN1);
+\draw [->,nearly transparent] (N31) to[out=270,in=90] (NN2);
+\draw [->,nearly transparent] (N32) to[out=270,in=90] (NN3);
+\draw [->,nearly transparent] (R2) to[out=270,in=270] (ato);
+\draw [->,nearly transparent] (R3) to[out=270,in=270] (abe);
+\draw [->,nearly transparent] (W2) to[out=270,in=90] (to);
+\draw [->,nearly transparent] (W3) to[out=270,in=90] (be);
+\end{tikzpicture}
+%
+\caption{
+  Two pop operations each deposit 4 coins (marked N, N, R, W), in
+  {\tt a[2]} and {\tt a[3]} respectively.
+  When {\tt resize()} is called, the coins
+  marked N are spent allocated the new array {\tt temp}, the R coin is
+  spent reading from {\tt a}, and the W coin is spent writing to {\tt
+    temp}. In the new {\tt a} (which is {\tt temp}), there is no money.
+}
 \end{marginfigure}
 
 But it's a matter of taste. I like the local argument better for
@@ -325,7 +383,7 @@ turn.
 
 \begin{figure}[htb]
 \centerline{\includegraphics[width=2in]{Zaehlwerk_Schema_1.jpg}
-$\quad$\includegraphics[width=2in]{Zaehlwerk_Schema_2.jpg}}
+$\quad$\includegraphics[width=2in]{Zaehlwerk_Schema_2_clean.png}}
 \caption{A 5-digit mechanical counter.}
 \end{figure}
 
