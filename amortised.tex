@@ -89,7 +89,7 @@ The implementation remains \emph{correct}, and it will also save
 space. 
 However, we can no longer guarantee the performance of proposition~E:
 
-\begin{ExerciseList}
+\begin{ExerciseList}\small
   \Exercise Exhibit a sequence of operations for which
   algorithm~1.1' requires a quadratic number of array accesses.
 \end{ExerciseList}
@@ -137,6 +137,44 @@ small rates) beforehand.\footnote{Another place where the banking
 Maybe ``piggy bank'' analysis would have been a better term, but the
 word is what it is.
 
+So, to be quite precise, here is the definition:
+
+\begin{quote}
+  Let $T(N)$ be the worst-case\footnote{Note that both the sequence of
+    operations, and the input, are chosen by our worst enemy.}  running
+    time for any sequence of $N$ operations. The amortized time for
+    each operation is $T(n)/n$.
+\end{quote}
+
+
+So why don't we just call it average?
+
+Because averages can be many things. We could average over all
+sequences of operations (say, call {\tt push()} and {\tt pop()} with
+equal probability), or over all inputs (this is called ``average case
+complexity'', and a difficult and active reseach area). If the
+algorithm uses randomness, we could average over those random outcomes
+(this is called expected running time). Amortized time is a
+particular, precise, worst-case average over the number of operations.
+
+\begin{ExerciseList}\small
+  \Exercise A multiride ticket in the Danish amusement part Tivoli
+  costs 200 DKK and is valid for 10 rides. What is the worst case cost
+  for a single ride? What is the amortised cost for a ride?  
+  \Exercise
+  Bob is a runner. 
+  He has been running 6~km every day of the week, except on Sundays.
+  What is the amortised number of kilometers he runs per day?
+  \footnote{If you want to nitpick: Bob started running on 23 March
+    2005.}
+  Worst case (assuming lazy is bad)?
+  \Exercise
+  Ran is also a runner.
+  He rolls a die every morning and runs as many kilometers.
+  What is the average number of kilometers Ran runs per day?
+  Worst case? 
+  Amortised?
+\end{ExerciseList}
 
 \subsection*{Proof of Proposition E}
 
@@ -145,25 +183,27 @@ We rephrase the claim with our new terminology:
    
 \begin{quote}{\bf\sf Proposition E.} 
   In the resizing array implementation of {\tt Stack} (Algorithm 1.1),
-  the amortised number of array accesses for any sequence of
-  operations starting from an empty data structure is constant in the
-  worst case. 
+  the amortised number of array accesses per operation for any
+  sequence of operations starting from an empty data structure is
+  constant in the worst case.
 \end{quote}
 
-We will pretend that every array access costs one coin.  We associate
-a (ficticious) piggy bank with our data structure and make every call
-of {\tt push()} and {\tt pop()} deposit a certain number of coins in
-the bank. (Determining how many coins is the technically difficult
-part of the argument.) 
+We will pretend that every array access costs one coin.  
+We associate a (ficticious) piggy bank with our data structure and
+make every call of {\tt push()} and {\tt pop()} deposit a certain
+number of coins in the bank.  
+(Determining how many coins is the technically difficult part of the
+argument.) 
 The aim is to have the pig finance every call of {\tt resize()}.
 
 Let my pull the right constants out of my hat: {\tt push()} shall
-deposit 8 coins, {\tt pop()} shall deposit 4 coin.\footnote{If you
-  want to be precise {\tt push()} costs 9 coins. It uses 1 coin to pay
-  for the array access in line 2, and puts the others in the
-  pig. Similarly, {\tt pop()} costs 6 coins. It uses 2 coins to pay
-  for the array acccesses in its first two lines and puts the
-  remainder in the pig.}
+deposit 8 coins, {\tt pop()} shall deposit 4 coin.%
+\footnote{If you want to be precise {\tt push()} costs 9 coins. %
+  It uses 1 coin to pay for the array access in line 2, and puts the
+  others in the pig. %
+  Similarly, {\tt pop()} costs 6 coins. %
+  It uses 2 coins to pay for the array acccesses in its first two
+  lines and puts the remainder in the pig.}
 
 The difficulty are the two internal calls to {\tt resize()}.  
 A call to {\tt resize(max)} requires $\mathtt{max}+ 2N$ array
@@ -254,8 +294,8 @@ in the bank.
 \end{itemize}
 This finishes the proof of proposition E.
 
-\begin{ExerciseList}
-  \Exercise Can we charge all costs to
+\begin{ExerciseList}\small
+  \Exercise \label{ex: only push}Can we charge all costs to
   \texttt{push()}? How much does it have to pay if \texttt{pop()} pays nothing?
   \Exercise Can we charge all costs to
   \texttt{pop()}? How much does it have to pay if \texttt{push()} pays nothing?
@@ -281,95 +321,85 @@ to {\tt pop()} put 4 coins on each of the free cells in $N+1,\ldots,
 The local argument is sometimes attractive because there is a strong
 inuition about what the coins will be doing, should they ever be
 needed.  
-For example, the 4 coins deposited by {\tt push} in position {\tt
+For example, the 4 coins deposited by {\tt pop} in position {\tt
   a[N+1]} will be able to pay for the allocation of the new array
 cells {\tt temp[1]} and {\tt temp[N+1]}, and the two accesses in {\tt
   temp[1] = a[1]}.
 
-\begin{marginfigure}
- %  \begin{tikzpicture}[font=\tt,scale=.4]
-%     \draw (0,0)
-%           node[anchor=south east] {\texttt{a[]}}
-%           rectangle (.4,.4) ;
-%     \node (pop1) at (0,-1) [anchor=west] {pop()};
-%     \draw (0,-2)
-%           node[anchor=south east] {\texttt{a[]}};
-%           \matrix[every node/.style={draw,inner sep=0pt,
-%             minimum height=8pt, minimum width=15pt},
-%           matrix of nodes,nodes in empty cells] {
-%            to & be & or & not
-%             &|[gray]|\textrm{\it null}
-%             &\textrm{\it null}
-%             &\textrm{\it null}
-%             &\textrm{\it null}\\
-%           };
-%           grid +(8,1);
-%     \node (pop2) [below of= pop1, anchor=west] {pop()};
-%     \node (pop3) [below of= pop2, anchor=west] {pop()};
-%   \end{tikzpicture}
-% %
-\tikzstyle{cell}=[draw,on chain,minimum width=6mm,
+\begin{figure}
+  \tikzstyle{cell}=[draw,on chain,minimum width=6mm,
   font=\tiny\tt, text height=1.25ex, text depth=.25ex]
-\tikzstyle{coin}=[draw,circle, inner sep= 1pt, fill=white,font=\tiny\sf]
-\begin{tikzpicture}
-\begin{scope}[start chain, node distance=0cm]
-  \node[on chain] {\tt\textcolor{red} a};
-  \foreach \word in {to, be, or, not} \node [cell]{\word};
-  \foreach \i in {4,...,7} \node [cell] {\it null};
-\end{scope}
-\node at (0,-1) [anchor=west]{\tt pop(); pop();} ;
-\begin{scope}[start chain, node distance=0cm]
-  \node at (0,-2) [on chain] {\tt\textcolor{red} a};
-  \foreach \word in {to, be} \node (a\word) [cell]{\word};
-  \foreach \i in {2,...,7} \node [cell](C\i) {\it null};
-\end{scope}
-\begin{scope}[start chain= going {at=(\tikzchainprevious),shift=(-40:.2)},node distance=0cm]
-\node (R2) [on chain,below of=C2, coin] {R};
-\node (W2) [on chain, coin] {W};
-\node (N21) [on chain, coin] {N};
-\node (N22) [on chain, coin] {N};
-\end{scope}
-\begin{scope}[start chain= going {at=(\tikzchainprevious),shift=(-40:.2)},node distance=0cm]
-\node (R3) [on chain,below of=C3, coin] {R};
-\node (W3) [on chain, coin] {W};
-\node (N31) [on chain, coin] {N};
-\node (N32) [on chain, coin] {N};
-\end{scope}
-\node at (0,-3) [anchor=west]{\tt Item[] temp = (Item []) new
-  Object[4]};
-\begin{scope}[start chain, node distance=0cm]
-  \node at (0,-4) [on chain] {\tt\textcolor{red} temp};
-  \foreach \i in {0,...,3} \node (NN\i) [cell] {\it null};
-\end{scope}
-\node at (0,-5) [anchor=west]{\tt temp[0] = a[0]; temp[1] = a[1]; };
-\begin{scope}[start chain, node distance=0cm]
-  \node at (0,-6) [on chain] {\tt\textcolor{red} temp};
-  \node (to) [cell] {to};   \node (be) [cell] {be};
-  \foreach \i in {2,...,3} \node [cell] {\it null};
-\end{scope}
-\draw [->,nearly transparent] (N21) to[out=270,in=90] (NN0);
-\draw [->,nearly transparent] (N22) to[out=270,in=90] (NN1);
-\draw [->,nearly transparent] (N31) to[out=270,in=90] (NN2);
-\draw [->,nearly transparent] (N32) to[out=270,in=90] (NN3);
-\draw [->,nearly transparent] (R2) to[out=270,in=270] (ato);
-\draw [->,nearly transparent] (R3) to[out=270,in=270] (abe);
-\draw [->,nearly transparent] (W2) to[out=270,in=90] (to);
-\draw [->,nearly transparent] (W3) to[out=270,in=90] (be);
-\end{tikzpicture}
-%
-\caption{
-  Two pop operations each deposit 4 coins (marked N, N, R, W), in
-  {\tt a[2]} and {\tt a[3]} respectively.
-  When {\tt resize()} is called, the coins
-  marked N are spent allocated the new array {\tt temp}, the R coin is
-  spent reading from {\tt a}, and the W coin is spent writing to {\tt
-    temp}. In the new {\tt a} (which is {\tt temp}), there is no money.
-}
-\end{marginfigure}
+  \tikzstyle{coin}=[draw,circle, on chain,inner sep= 1pt, fill=white,font=\tiny\sf]
+  \begin{tikzpicture}[node distance=0cm]
+    \begin{scope}[start chain]
+      \node[on chain] {\tt a};
+      \foreach \word in {to, be, or, not} \node [cell] {\word};
+      \foreach \i in {4,...,7} \node [cell] {\it null};
+    \end{scope}
+    \node at (6,-.5) [anchor=west]{\tt pop(); pop();} ;
+    \begin{scope}[start chain]
+      \node at (0,-1) [on chain] {\tt a};
+      \foreach \word in {to, be} \node (a\word) [cell]{\word};
+      \foreach \i in {2,...,7} \node [cell](C\i) {\it null};
+    \end{scope}
+    \begin{scope}[start chain= going {at=(\tikzchainprevious),shift=(-80:.3)}]
+      \node (N21) [coin,below of=C2] {N};
+      \node (N22) [coin] {N};
+      \node (R2) [coin] {R};
+      \node (W2) [coin] {W};
+    \end{scope}
+    \begin{scope}[start chain= going {at=(\tikzchainprevious),shift=(-80:.3)}]
+      \node (N31) [coin, below of=C3] {N};
+      \node (N32) [coin] {N};
+      \node (R3) [coin] {R};
+      \node (W3) [coin] {W};
+    \end{scope}
+      \node at (6,-2) (TEMP) [anchor=west]{\tt temp = };
+    \begin{scope}[start chain]
+      \chainin (TEMP);
+      \node [draw, red, on chain] (NEW) {\tt new Object[4];};
+    \end{scope}
+    \begin{scope}[start chain]
+      \node at (0,-3) [on chain] {\tt temp};
+      \foreach \i in {0,...,3} \node (NN\i) [cell] {\it null};
+    \end{scope}
+    \node at (6,-3.5) (TEMP0) [anchor=west,draw]{\tt temp[0] };
+    \begin{scope}[start chain]
+      \chainin (TEMP0);
+      \node [on chain] {\tt = };
+      \node [on chain, draw, red] (A0) {\tt a[0];};
+  \end{scope}
+  \node at (6,-4.3) (TEMP1) [anchor=west,draw]{\tt temp[1] };
+  \begin{scope}[start chain]
+    \chainin (TEMP1);
+    \node [on chain] {\tt = };
+    \node [on chain, draw, red] (A1) {\tt a[1];};
+  \end{scope}    
+  \begin{scope}[start chain]
+      \node at (0,-5) [on chain] {\tt temp};
+      \node (to) [cell] {to};   \node (be) [cell] {be};
+      \foreach \i in {2,...,3} \node [cell] {\it null};
+    \end{scope}
+    \draw [->,nearly transparent] (N21) to[out=0,in=135] (NEW);
+    \draw [->,nearly transparent] (N22) to[out=0,in=135] (NEW);
+    \draw [->,nearly transparent] (N31) to[out=0,in=135] (NEW);
+    \draw [->,nearly transparent] (N32) to[out=0,in=135] (NEW);
+    \draw [->,nearly transparent] (R2) to (TEMP0);
+    \draw [->,nearly transparent] (R3) to (TEMP1);
+    \draw [->,nearly transparent] (W2) to (A0);
+    \draw [->,nearly transparent] (W3) to (A1);
+  \end{tikzpicture}
+  % 
+  \caption{ Two {\tt pop()} operations each deposit 4 coins (marked N, N, R,
+    W), in {\tt a[2]} and {\tt a[3]} respectively.  When {\tt
+      resize()} is called, the coins marked N are spent allocated the
+    new array {\tt temp}, the R coin is spent reading from {\tt a},
+    and the W coin is spent writing to {\tt temp}. In the new {\tt a}
+    (which is {\tt temp}), there is no money.  }
+\end{figure}
 
 But it's a matter of taste. I like the local argument better for
-exercise~X.
-
+exercise~\ref{ex: only push}.
 
 
 \section{Mechanical Counter}
@@ -425,7 +455,7 @@ N\left(\frac{1}{10^0}+\frac{1}{10^1}+\cdots+\frac{1}{10^{k-1}} \right)
 \end{multline*}
 This finishes the proof.
 
-\begin{ExerciseList}
+\begin{ExerciseList}\small
 \Exercise
 Prove proposition~C using the piggy bank method instead.
 If you use the local argument, where does the money go?
@@ -636,8 +666,5 @@ gets renamed at most $\sim\log k$ times in total, there are $\sim
 $\sim 2k\log k / k = 2\log k$, i.e., logarithmic in $k$. This finishes
 the proof of propostion A4.
 
-\section{A Dictionary of Sorted Lists}
-
-[TODO]
 
 \end{document}
