@@ -43,11 +43,11 @@ Consider the resizing array implementation of {\tt Stack} (Algorithm
    
 \begin{quote} {\bf Proposition A1.} In the resizing array
   implementation of {\tt Stack} (Algorithm 1.1), the average number of
-  array accesses for any sequence of {\tt push()} operations starting
+  array accesses per operation for any sequence of {\tt push()} operations starting
   from an empty data structure is constant in the worst case.
 \end{quote}
 
-This is a true statement, and proved in [SW1].
+This is a true statement, and proved in [SW].
 
 Is A1 still true when I remove ``starting from an empty data
 structure''?
@@ -116,7 +116,7 @@ reduce or extinguish an amount by money regularly put aside:
 \emph{loan fees can be amortized over the life of the mortgage.}, gradually write off the initial cost of an asset: \emph{they want to amortize the tooling costs quickly}.
 }
 \footnote{Many people view this material as  difficult, subtle, and somewhat
-boring. I may be well
+boring. It may be well
 characterised by a word whose latin root is \emph{ad mortis}, ``to death.''}
 
 The idea is to ``write off'' the costs for {\tt reduce()} in the long
@@ -181,7 +181,7 @@ particular, precise, worst-case average over the number of operations.
 We rephrase the claim with our new terminology:
 
    
-\begin{quote}{\bf\sf Proposition E.} 
+\begin{quote}{\bf Proposition E.} 
   In the resizing array implementation of {\tt Stack} (Algorithm 1.1),
   the amortised number of array accesses per operation for any
   sequence of operations starting from an empty data structure is
@@ -482,20 +482,16 @@ called \emph{quick-find}.
 
 Let us try to salvage this idea, at least partially. We're not going
 to be able to beat the quick-union implementations, but this section
-is mainly about \emph{analysis}, not so much about giving the best
+is mainly about \emph{analysis}, not so much about presenting the best
 union--find algorithm known to Man.
 
 Our first improvement is to make a clever choice about whether
 \texttt{union(p, q)} renames {\tt p}'s component to {\tt q}'s or vice
 versa. 
 Our choice is to always rename the smaller component.
-For this, we introduce another array {\tt int[] sz} to store component
-sizes, initially all $1$, and with the same meaning as in
-algorithm~1.4.
+For this, we introduce another array {\tt int[] sz} to store component sizes, initially all $1$, and with the same meaning as in algorithm~1.4.
 
-The second improvement is to link all elements of a component, so that
-we can quickly iterate over them when we want to rename them, instead
-of iterating over all of {\tt id}.
+The second improvement is to link all elements of a component, so that we can quickly iterate over them when we want to rename them, instead of iterating over all of {\tt id}.
 For this, we implement yet another array {\tt int[] next} of indices,
 so that {\tt next[i]} is the element following {\tt i} in some
 circular list of the component ids.
@@ -622,49 +618,127 @@ public class WeightedQuickFind
 \caption{\label{fig: WUF impl}Weighted quick-find.}
 \end{figure}
 
-It is easy to construct a sequence of {\tt union()} operations that
-result in linear worst-case time per operation. (Construct such a
-sequence.) However, we show that in the amortised sense, the data
-structure is pretty fast:
+
+Intuitively, we have made our data structure a lot faster.
+For instance, consider the sequence of $N$ unions in Figure~\ref{fig: fast sequence}.
+\begin{marginfigure}
+  \begin{tabbing}
+    $N$\\
+    {\tt 0 1}\\
+    {\tt 1 2}\\
+    {\tt 2 3}\\
+    {\tt 3 4}\\
+  $\vdots$\\
+    $(N-2)$ $(N-1)$\\
+  \end{tabbing}
+\end{marginfigure}
+Each {\tt union} takes constant time, whereas the original {\tt QuickFind} data structure would have used linear time.
+This is great progress.
+Unfortunately, our usual way of analyses is unable to detect that improvement, because we usually are interested in \emph{worst-case} running times.
+And the worst case running time of {\tt WeightedQuickFind} is quite bad:
 
 \begin{quote}
-  {\bf Proposition A4.} In the weighted quick-find implementation, any
-  sequences of {\tt union()} operations takes amortized logarithmic
-  time in the worst case.
+  {\bf Proposition.}
+  A call to {\tt union()} in {\tt WeightedQuickFind} can take linear time in the worst case.
 \end{quote}
 
-We can show this using the aggregate method, so we consider a sequence
-of $k$ calls to {\tt union()}.
+\begin{marginfigure}
+  \begin{tabbing}
+    $N$\\
+    {\tt 0 2}\\
+    {\tt 1 3}\\
+    {\tt 2 4}\\
+    {\tt 3 5}\\
+  $\vdots$\\
+    $(N-4)$ $(N-2)$\\
+    $(N-3)$ $(N-1)$\\
+    $(N-2)$ $(N-1)$\\
+  \end{tabbing}
+\end{marginfigure}
+To see that this is true, consider the sequence of operations in Figure~\ref{fig: slow}.
+The very last call to union, when all the odd elements are united with the even elements, leads to $\tilde N$ array accessses.
+(This happens in {\tt rename}, when the for-loop updates $\frac{1}{2}N$ entries in the {\tt id} array.)
 
-We will count the number of updates of {\tt id[]} in {\tt rename()},
-from the perspective of a single site $i$. 
-The crucial observation is that whenever the {\tt id} of $i$ is
-renamed, the size of its component at least doubles.
-(This is because we always rename the smaller of two unioned
-components, and the size of the union is at least twice of the smaller
-one.)
+Note that while this statement is true, it is also very pessimistic.
+
+\begin{quotation}
+  Before we continue, let's remind ourselves that there is a good reason for our usual focus on the worst case.
+  We normally don't evaluate our data structure by its behaviour on particularly well-chosen inputs that make the data structure look good. 
+  The \emph{best-case} time for {\tt QuickFind} was constant as well, after all: Just call {\tt union(0,1)} $N$ times in a row.
+
+  Also note that `typical case' (however that should be defined) is a no-starter.
+  Almost all calls to union in our two examples take constant time, so the `typical case behaviour is constant for {WeightedQuickFind}'---but that says more about our input sequences than the data structure.
+
+  At this time one is tempted to define `average case,' or, to be quite precise `average input sequence.'
+  This can indeed be done quite rigorously, by defining a random process.
+  For instance, we could pick $p,q\in\{0,\ldots, N-1\}$ at random, independently and with the same probability, and then try to determine the expected value of the running time of {\tt union($p$,$q$)} after $N$ operations.
+  There are two reasons for us to \emph{not} pursue this method of analysis.
+  First, it is mathematically sophisticated and requires some exposure to discrete probability theory.
+  Second, it tells us surprisingly \emph{little} about our data structure, because the result depends very heavily on the choice of distribution.
+  (For instance, why should $p$ and $q$ be independent? 
+  Why should they be uniformly distributed instead of normal, or Poisson, or a dozen other distributions that appear in real life?
+  To appreciate these questions, imagine the union--find data structure used in an algorithm for Kruskal's algorithm for minimum spanning tree.
+  Then the $p$ and $q$ depend on the structure of the input graph and the weight of its edges---that is absolutely not a uniformly random process!
+  It would be much more interesting to define, say `the input sequence arising from the union--find calls of an execution of Kruskal's algorithm on a random graph.'
+  But this gets \emph{very} difficult to analyse (including specific details about the implmentation!), and only shifts the question to `what kind or random process did the graph arise from'?
+  No matter how we try to define `random inputs,' we find ourselves in the position of having to motivate the distribution.
+  
+  The discussion above largely served to motivate why we try to avoid the term `average.'
+  It's not very well defined, and of very questionable value.
+  (Moreover, we can't do the math.)
+  )
+\end{quotation}
+
+\medskip
+After rejecting all these methods of analysis we turn to amortised analysis.
+
+\begin{quote}
+  {\bf Proposition A4.} In the weighted quick-find implementation, {\tt union()} operation takes amortized logarithmic time in the worst case, beginning from an initialized data structure.
+\end{quote}
+
+We can show this using the aggregate method, so we consider a sequence of $k$ calls to {\tt union()} and want to show that it takes $O(k\log k)$ time.
+
+We will count the number of updates of {\tt id[]} in {\tt rename()}, from the perspective of a single site $i$. 
+The crucial observation is that whenever the {\tt id} of $i$ is renamed, the size of its component at least doubles.
+(This is because we always rename the smaller of two unioned components, and the size of the union is at least twice of the smaller one.)
 On the other hand, no component can ever be larger than $k+1$. 
-(This is because every elemented started out in a component of its
-own.
-At some time, this component must have been united with the others,
-which must have required a call to {\tt union()}.)
-Thus, no component can have been doubled more than $\log (k+1)$ times.
-In particular, the {\tt id[i]} has been renamed at most $\log
-(k+1)$ times.
+(This is because every elemented started out in a component of its own.
+At some time, that component must have been united with the others, which must have required a call to {\tt union()}.)
+Thus, the component of $i$ has been doubled no more than $\log (k+1)$ times.
+In particular, {\tt id[i]} has been changed at most $\log (k+1)$ times.
 
-We are close to finishing the argument and tempted to say ``since
-there are $N$ sites, and we just saw that each gets renamed $~\log k$
-times in total during the $k$ operations, so the amortised time per
-operation is $N\log k / k$, so --- hmmm $\ldots$.''
+Next, we need to argue that at most $2k$ sites were renamed during the $k$ operations.
+This is because a site that never appeared as one of the two arguments in some call to {\tt union} still remains in its original component.
+Thus, at most $2k$ sites are ever renamed.
+We argued above that just saw that each site gets renamed at most $\sim\log k$ times in total.
+Thus, the total number of updates to {\tt id} is $\sim k\log k$. 
+This finishes the proof of propostion A4.
+\bigskip
 
-We need one more observation: if site $i$ does not occur as an
-argument to {\tt union()} during the $k$ operations, then it is never
-renamed. Thus, at most $2k$ sites are ever renamed. Now we an finish:
-Since only $2k$ sites are ever renamed, and we just saw that each site
-gets renamed at most $\sim\log k$ times in total, there are $\sim
-2k\log k$ array updates. Thus the amortised time per operation is
-$\sim 2k\log k / k = 2\log k$, i.e., logarithmic in $k$. This finishes
-the proof of propostion A4.
+Let us reiterate a few points about the formulation of proposition 4A:
+\begin{enumerate}
+  \item  Note the role that `worst case' plays:
+    It says that in \emph{any}, even the most maliciously constructed input sequence, is is \emph{impossible} that the first $k$ operations take more than $O(k\log k)$ time in total.
+    (Without `worst case', proposition A4 remains true, since it also holds for `best case' or `average case' or `typical case', however you want to define them.
+    But none of those statements are interesting, and all of them are weaker.)
+\item Note the role that `amortized' plays:
+  Without it, proposition 4A is plainly false; there are operations that take linear time, as discussed above.
+\item Note the role that `beginning from an initialized data structure' plays. 
+  Without it, proposition 4A is plainly false; there are single operations that take linear time, as discussed above.
+\end{enumerate}
 
+\section{On the word `average' in [SW]}
 
+We already discussed the use of the word `average' and its various meanings.
+The concept described in these notes is a specific kind of average called `amortised,' and we have tried to be disciplined in our use of it.
+This does not mean that the mental model of `amortisation is just some kind of average' is false.
+In particular, the textbook [SW] itself uses the word in its own formulation of proposition A4.
+
+However, as a possible source of confusion the word `average' is used in Proposition K in [SW, Sec. 2.3] with a different meaning:
+\begin{quote}
+  {\bf Proposition K}. Quicksort uses $\sim 2N\ln N$ compares (and one-sixth that many exchanges) on the average to sort an array of length $N$ with distinct keys.
+\end{quote}
+This statement describes the running time of a single run of an algorithm on a random input (namely, a sequence of uniformly and independently distributed integers).
+This is precisely \emph{not} how `average' is used in proposition A4:
+There, the sequence (which defines repeated operations on a data structure) is nonrandom (it is, in fact, a worst case sequence.)
 \end{document}
