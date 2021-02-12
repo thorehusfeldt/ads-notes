@@ -1,0 +1,6 @@
+*.aux
+*.log
+*.out
+.mypy_cache/*
+vc.tex
+*.class
