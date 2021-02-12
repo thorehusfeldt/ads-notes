@@ -11,7 +11,7 @@ make
 DEPENDENCIES:
 
 pdflatex (other latexes should work)
-Packages: tufte-handout, exercise
+acm document class acmart
 
 ACKNOWLEDGEMENTS:
 
