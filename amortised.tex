@@ -762,7 +762,7 @@ Again, the proper way to analyse the data structure is the amortized point of vi
 }
 
 
-\begin{theorem}\label{prop: weighted quick-find amortized}
+\begin{theorem}\label{thm: weighted quick-find amortized}
   In weighted quick-find for $n\geq 2$ elements, the {\tt union()} operation takes amortized time $O(\log n)$ in the worst case, beginning from an initialized data structure.
 \end{theorem}
 
@@ -776,31 +776,29 @@ On the other hand, no component can ever be larger than $n$.
 Thus, the component of $i$ has been doubled no more than $\log_2 n$ times.
 In particular, {\tt id[i]} has been changed at most $\log_2 n$ times.
 
-Next, we need to argue that at most $2k$ sites were renamed during the $k$ operations.
+Next, we need to argue that at most $2k$ sites are ever renamed during the $k$ operations.
 This is because a site that never appeared as one of the two arguments in some call to {\tt union} still remains in its original component.
 Thus, at most $2k$ sites are ever renamed.
-We argued above that just saw that each site gets renamed at most $\log n$ times in total.
-Thus, the total number of updates to {\tt id} is $k\log_2 n$. 
-This finishes the proof of propostion A4.
+We argued above that each site gets renamed at most $\log n$ times in total.
+Thus, the total number of updates to {\tt id} is at most $2k\log_2 n$. 
 \end{proof}
 
-Let us reiterate a few points about the formulation of Prop.~\ref{prop: weighted quick-find amortized}
+Let us reiterate a few points about the formulation of Theorem~\ref{thm: weighted quick-find amortized}
 \begin{enumerate}
   \item  Note the role that `worst case' plays:
-    It says that in \emph{any}, even the most maliciously constructed input sequence, is is \emph{impossible} that the first $k$ operations take more than $O(k\log k)$ time in total.
-    (Without `worst case', proposition A4 remains true, since it also holds for `best case' or `average case' or `typical case', however you want to define them.
+    It says that in \emph{any}, even the most maliciously constructed input sequence, is is \emph{impossible} that the first $k$ operations take more than $O(k\log n)$ time in total.
+    (Of course, the claim \emph{also} holds for `best case' or `average case' or `typical case', however you want to define them.
     But none of those statements are interesting, and all of them are weaker.)
 \item Note the role that `amortized' plays:
-  Without it, proposition 4A is plainly false; as shown by Exercise~\ref{ex: quick-find worst case}.
+  Without it, the theorem is plainly false; as shown by Exercise~\ref{ex: quick-find worst case}.
 \item Note the role that `beginning from an initialized data structure' plays. 
-  Without it, proposition 4A is plainly false: if we begin later, Exercise~\ref{ex: quick-find worst case} shows that there are sequences of length $1$ (namely ``union(0,1)'') that take time linear in the size of the data structure.
-    And if we begin earlier, then the initialisation itself takes linear time.
+  Without it, the claim is plainly false: if we begin later, Exercise~\ref{ex: quick-find worst case} shows that there are sequences of length $1$ (namely, \texttt{union(0,1)}) that take time linear in the size of the data structure.
+    And if we begin earlier, then the initialisation itself takes time $O(n)$ already for $k=0$.
 \end{enumerate}
 
 \section{Unweighted Quick-Union with Path Compression}
 
-
-Assume that we extend the (unweighted) quick-union algorithm (SW, pp. 224) to include \emph{path compression} (but not  union-by-rank).
+Assume that we extend the (unweighted) quick-union algorithm (SW, pp. 224) to include \emph{path compression}, but not  union-by-rank.
 To be precise, we rewrite the \texttt{find(int p)}-operation so that it links every site on the path from $p$ to the root directly to the root, like in Fig.~\ref{fig: path compression}
 
 \begin{figure}[h]
@@ -866,55 +864,66 @@ One elegant way of implementing that is recursively, as follows:
 We will show that this data structure is as good as \emph{weighted} quick-union, at least in the amortised sense:
 
 \begin{theorem}[Exercise 1.5.12 in SW]\label{prop: path compression}
-  (Unweighted) quick-union with path compression requires amortised logarithmic time per update.
+  (Unweighted) quick-union on a universe of $n\geq 2$ elements with path compression takes $O(\log n)$ amortised time per update in the worst case.
 \end{theorem}
 
 Before proving this, convince yourself that amortisation is crucial for this claim.
 For unlike for weighted quick-union, we cannot establish a logarithmic time bound \emph{in the worst case}:
 
 \begin{ExerciseList}
-  \Exercise{} Exhibit a sequence of operations that shows that (unweighted) quick-union with path compression requires linear time per update in the worst case.
-  \Answer{}  Begin with $N$ unions
+  \Exercise{} Exhibit a sequence of operations (unweighted) quick-union with path compression where a single operation requires linear time, $\Theta(n)$.
+  \Answer{}  Begin with $n$ unions
   \texttt{union($0$,$1$)}, 
   \texttt{union($1$,$2$)}, 
   $\ldots$, 
-  \texttt{union($N-2$,$N-1$)}.
-  (Each took constant time, the data structure is now a directed path of length $N$.)
+  \texttt{union($n-2$,$n-1$)}.
+  (Each took constant time, the data structure is now a directed path of length $n$.)
   Now call \texttt{find($0$)}.
   This single operation requires linear time, so the worst case time for an operation is (at least) linear.
 \end{ExerciseList}
 
 \begin{proof}[Proof of Prop.~\ref{prop: path compression}]
-  We need to consider an arbitrary sequence of $N$ operations (unions or finds) and show that the total time for these operations is $O(N\log N)$.
-  Our cost model will be the total number of edges that exist at any time during the evolution of the data structure.
+  We need to consider an arbitrary sequence of $k$ operations (unions or finds) and show that the total time for these operations is $O(k\log n)$.
+
+  Our cost model will be the total number of edges, not including self-loops, that are destroyed by find operations at any time during the evolution of the data structure.
+  This choice requires some attention.
+  Each \emph{union} operation performs a nontrivial but constant amount of work, in total $O(k)$, which we can neglect compared to $O(k \log n)$.
+  (This includes destroying self-loops.)
+  Each \emph{find} operation performs a constant amount of work (mainly traversing edges), again at most $O(k)$ in total.
+  Whenever a \emph{find} operation traverses \emph{more} than a single edge, it immediately performs a path compression that \emph{destroys} those edges (except the last one.)
+  Thus, we can restrict our attention to counting destroyed edges---they exactly correspond to the nonconstant work performed by \emph{find}, everything else costs $O(k)$ in total.
+
+  \medskip
 
   We let $T_u$ denote the subtree rooted at node $u$, including $u$ itself.
-  An edge $e$ from $u$ to $v$ is called \emph{heavy} if, at the time of its destruction, it accounted for at least half of its parent's weight in the sense that $|T_u| \geq \frac12|T_v|$.
-  (A self-loop is always heavy.)
-  Otherwise it is \emph{light}; this includes those edges that are never destroyed.
-  We show that both the number of light edges and the number of heavy edges are at most $O(n\log n)$.
+  An edge $e$ from $u$ to $v$ (with $u\neq v$) is called \emph{heavy} if, at the time of its destruction, it accounted for at least half of its parent's weight in the sense that $|T_u| \geq \frac12|T_v|$.
+  Otherwise it is \emph{light}.
+  We will show that both the number of light edges and the number of heavy edges are at most $O(k\log n)$.
 
+  \medskip
   \emph{Light:}
-  There is a negligible number of $n$ (light) edges that are never destroyed and survive to the end.
-  For the others, a light edge is destroyed only when it lies on the path traversed by a find operation.
-  Consider such a path $v_0$, $\ldots$, $v_r$ from top to bottom, and let $e$ from $u$ to $v$ be one of its edges. 
+  Consider a particular \emph{find} operation and let $v_1$, $\ldots$, $v_r$ be the path of vertices traversed by the operation, numbered from top to bottom.
+  Let $e$ from $u$ to $v$ be a light edges on this path.
   Because $e$ is light, the corresponding subtrees double in size: $|T_v|> 2|T_u|$.
-  Thus, if the path contains $k$ light edges, we have \[|T_{v_r}| > 2^k |T_{v_0}|\,.\]
-  Since $|T_{v_r}|\leq n$ and $|T_{v_0}| \geq 1$, we have $k\leq\log_2 n$.
-  Thus, the path contains at most $\log_2 n$ light edges, and therefore the find operation cannot destroy more than that.
-  Since there are at most $3N$ find operations, we conclude that the total number of light edges is $O(N\log N)$.
+  Thus, if the path contains $l$ light edges, we have \[|T_{v_r}| > 2^l |T_{v_0}|\,.\]
+  Since $|T_{v_r}|\leq n$ and $|T_{v_0}| \geq 1$, we have $l\leq\log_2 n$.
+  Thus, the path contains at most $\log_2 n$ light edges, and therefore the \emph{find} operation cannot destroy more than that many.
+  Since there are at most $3k$ \emph{find} operations, we conclude that the total number of light edges destroyed is $O(k\log n)$.
  
+  \medskip
   \emph{Heavy:}
-  We associate each heavy edge $e$ from $u$ to $v$ with its target $v$.
-  Let $e_0,\ldots, e_r$ be the heavy edges pointing to $v$ at any time during the evolution of the data structure.
-  In particular, $e_0$ is the initial self-loop from $v$ to $v$.
-  Let $w_0,\ldots, w_r$ denote the \emph{weight} of $v$, i.e., the size $|T_v|$ of the subtree rooted at $v$, at the time when $e_0,\ldots, e_r$ are destroyed.
-  After $e_0$ is destroyed (by a union operation) and vertex $v$ ceases to be a root, its weight can only decrease.
+  We count the heavy edges by associating each heavy edge $e$ from $u$ to $v$ with its target endpoint $v$.
+  Let $e_1,\ldots, e_r$ be the heavy edges pointing to $v$ at any time during the evolution of the data structure.
+  Let $w_1,\ldots, w_r$ denote the \emph{weight} of $v$, i.e., the size $|T_v|$ of the subtree rooted at $v$, at the time when $e_1,\ldots, e_r$ were destroyed.
+
+  A crucial observation is that at the time $t$ when $e_1$ was destroyed, vertex $v$ was no longer a root.
+  (Path compression never manipulates the last edge on a path, so only non-roots can get  incoming edges removed.)
+  Thus, $v$ never \emph{gains} weight after time $t$.
   Moreover, because each $e_i$ is heavy, we know that the removals of $e_1$, $\ldots$, $e_r$ each reduced the weight of $v$ by at least half.
   Thus, 
-  \[ w_0\geq w_1\geq 2 w_2 \geq 2^2w_3\cdots\geq 2^{r-1} w_r\,.\]
-  Since each $w_i$ is an integer between $1$ and $N$, we have $r - 1\leq \log_2 N$.
-  There are $N$ different target vertices, so the total number of heavy edges is $O(N\log_2 N)$.
+  \[ w_1\geq 2 w_2 \geq 2^2w_3\cdots\geq 2^{r-1} w_r\,.\]
+  Since each $w_i$ is an integer between $1$ and $n$, we have $r - 1\leq \log_2 n$.
+  There are at most $2k$ different target vertices (vertices that were never an argument to \emph{union} have no incoming edges except their own self-loop), so the total number of heavy edges is $O(k\log n)$.
 \end{proof}
 
 \begin{ExerciseList}
@@ -925,9 +934,9 @@ For unlike for weighted quick-union, we cannot establish a logarithmic time boun
   \Answer{}
   Almost.
   The cost model is still valid, since number of edges still accounts for the number of operations, up to linear terms.
-  But it is less clear that a vertex only ever loses weight after it ceases to be a vertex.
+  But it is less clear that a vertex only ever loses weight after it ceases to be a root.
   (After all, path halving may connect a vertex to a fresh parent that is not a root.)
-  However, no vertex ever receices a new \emph{descendant} after it loses its self-loop, so the argument remains true.
+  However, it is true that no vertex ever receices a new \emph{descendant} after it loses its self-loop, so the main argument remains true and the proof can be fixed.
 \end{ExerciseList}
 
 \section{On the word `average' in [SW]}
