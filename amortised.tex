@@ -1,9 +1,20 @@
-\documentclass{tufte-handout}
-\usepackage{tikz}\usetikzlibrary{decorations.pathreplacing,positioning,chains}
+%proo\documentclass[acmtog,nonacm]{acmart}
+\documentclass{tstextbook}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing,positioning,chains, shapes.geometric}
 \usepackage{tipa}
 \usepackage{color}
 \usepackage{listings}
-\usepackage{amsmath}
+\makeatletter
+\def\lmtt@use@light@as@normal{}
+\usepackage{etoolbox}
+%\usepackage{amsmath}
+%\theoremstyle{plain}% default
+%\newtheorem{thm}{Theorem}[section]
+%\newtheorem{prop}[thm]{Proposition}
+%\theoremstyle{definition}
+%\newtheorem{defn}{Definition}[section]
+
 \usepackage{booktabs}
 
 \input{vc.tex}
@@ -20,90 +31,60 @@
 \ExerciseHeaderOrigin\ignorespaces}
 \renewcommand{\AnswerListHeader}{\textbf{\ExerciseHeaderNB.\ }}
 
-\title{Amortised analysis}
+\title{Additional Note for Algorithms and Data Structures}
 \author{Thore Husfeldt}
 \date{\small Revision {\tt \GITAbrHash}$\ldots$, \GITAuthorDate, \GITAuthorName}
 \begin{document}
 \maketitle
-\begin{abstract}
-  This note covers the technique of amortized analysis, as a
+
+\chapter{Amortisation}
+\label{sec-1.1}
+  \begin{summary}
+    This note covers the technique of amortized analysis, as a
   supplement to [SW], the textbook \emph{Algorithms, 4th ed.} by
   Sedgewick and Wayne.
 
-  It contains a complete answer to exercise 1.4.32 thus completing the
-  proof of proposition~E in section 1.4.
-\end{abstract}
+  It contains a complete answer to [SW, exercise 1.4.32] thus completing the
+  proof of proposition~E in [SW, section 1.4].
+  
+  It also contains amortised analyses of some union--find data structures.
+  \end{summary}
 
-\section{Resizing array}
-\label{sec-1.1}
+  \section{Aggregate method}
+Consider the resizing array implementation of {\tt Stack} (Algorithm 1.1) and the collowing claim:
 
-Consider the resizing array implementation of {\tt Stack} (Algorithm
-1.1) and the collowing claim:
-
-   
-\begin{quote} {\bf Proposition A1.} In the resizing array
+\begin{theorem}[Proposition E in SW 1.4, only for push]
+  \label{prop: E original}
+  In the resizing array
   implementation of {\tt Stack} (Algorithm 1.1), the average number of
   array accesses per operation for any sequence of {\tt push()} operations starting
   from an empty data structure is constant in the worst case.
-\end{quote}
+\end{theorem}
 
 This is a true statement, and proved in [SW].
+We include a full proof below, in section~\ref{sec: nopop}, just for completeness.
 
-Is A1 still true when I remove ``starting from an empty data
+\begin{ExerciseList}
+  \Exercise
+  Is Prop.~\ref{prop: E original} still true when I remove ``starting from an empty data
 structure''?
+\Answer
 No.
 To see this, begin with a stack that is the result of $2^k-1$
 applications of {\tt push(null)}. 
 Now {\tt N} equals $2^k-1$ and {\tt  a.length} equals $2^k$. 
-From this starting position, a single {\tt push()} will will result in
-a {\tt resize()}, leading to a  number of array accesses that is
+From this starting position, a single {\tt push()} will result in
+a call to {\tt resize()}, leading to a  number of array accesses that is
 linear in {\tt N}.
-   
-Is A1 still true when I remove ``average''?
+  \Exercise
+  Is Prop.~\ref{prop: E original} still true when I remove ``average''?
+\Answer
 No.
-The same example works.
-   
-What we will do now is to show that A1 is still true when I remove
-``{\tt push()}''. 
-(This is exactly Proposition~E in [SW1].)
-Intuitively, this sounds reasonable, since {\tt pop()} only makes the
-stack smaller, whereas the expensive operation seems to happen when
-the stack grows and causes and expensive {\tt resize()}.
-However, even though this argument sounds tempting, it is wrong.
-This is the purpose of the next example.
-  
-\subsection*{Stingy resizing array}
-\label{sec-1.2}
-
-We will change algorithm~1.1 to halve the size of {\tt a} as soon as
-it can.  
-More specifically, let algorithm~1.1' be the same as algorithm 1.1,
-with the following change in the implementation of {\tt pop()}, where
-a {\tt 4} was replaced by a {\tt 2}:
-
-\begin{quote}
-  {\tt if (N > 0 \&\& N == a.length/2) resize(a.length/2);}
-\end{quote}
-   
-The implementation remains \emph{correct}, and it will also save
-space. 
-However, we can no longer guarantee the performance of proposition~E:
-
-\begin{ExerciseList}\small
-  \Exercise Exhibit a sequence of operations for which
-  algorithm~1.1' requires a quadratic number of array accesses.
 \end{ExerciseList}
 
-In other words, the sequence requires a linear number of array
-accesses on the average, much worse than the constant number
-prophesised by proposition~E. 
-We must resign ourselves to the fact that proposition~E does not hold
-for algorithm~1.1'.
-Since it does hold for algorithm~1.1 (I promise), the argument
-somewhere must be sensitive to the difference between 4 and 2.
-Our intuitive argument did not do this.
+ 
 
-\subsection{Terminology: Amortisation and average}
+\section{Terminology: Amortisation versus average}
 
 From now on, we will try to avoid the term ``on the average.'' 
 Not because it is wrong, but because it is too broad.
@@ -139,62 +120,215 @@ word is what it is.
 
 So, to be quite precise, here is the definition:
 
-\begin{quote}
-  Let $T(N)$ be the worst-case\footnote{Note that both the sequence of
-    operations, and the input, are chosen by our worst enemy.}  running
-    time for any sequence of $N$ operations. The amortized time for
-    each operation is $T(n)/n$.
-\end{quote}
+  \begin{definition}[Amortized cost]
+    Let $T(N)$ be the worst-case\footnote{
+      Imagine that the sequence of operations, including the parameters to these operations, are chosen by your worst enemy.}
+    total running time for any sequence of $N$ operations.
+    The \emph{amortized} time for each operation is $T(N)/N$.
+\end{definition}
 
+So why don't we just call it ``average'' time?
 
-So why don't we just call it average?
+Because ``average'' also means many other things. 
+For instance, we could average over operations (say, call {\tt push()} and {\tt pop()} with equal probability, and with random arguments to {\tt push()})---this is called ``average case complexity'', and a difficult and active reseach area.
+Also, for algorithms that use randomness, we could average over tho random choices of the algorithm---this is called ``expected running time'', another active research area.
+Both of these concepts of average make sense for a single opeation, and both would require us to be quite precise about the random processes involved.
 
-Because averages can be many things. We could average over all
-sequences of operations (say, call {\tt push()} and {\tt pop()} with
-equal probability), or over all inputs (this is called ``average case
-complexity'', and a difficult and active reseach area). If the
-algorithm uses randomness, we could average over those random outcomes
-(this is called expected running time). Amortized time is a
-particular, precise, worst-case average over the number of operations.
+In contrast, ``amortized time'' is a particular, precise, worst-case average over a sequence of operations.
 
-\begin{ExerciseList}\small
-  \Exercise A multiride ticket in the Danish amusement part Tivoli
-  costs 200 DKK and is valid for 10 rides. What is the worst case cost
-  for a single ride? What is the amortised cost for a ride?  
+\begin{ExerciseList}
   \Exercise
-  Bob is a runner. 
-  He has been running 6~km every day of the week, except on Sundays.
+  Bob is a reluctant runner. 
+  He has been running 4~km every day of the week, except in the week-ends.
+  (i) What is the worst case number of kilometers he runs per day?
+  (ii) He started this new workout schedule on a Saturday.
   What is the amortised number of kilometers he runs per day?
-  \footnote{If you want to nitpick: Bob started running on 23 March
-    2005.}
-  Worst case (assuming lazy is bad)?
+  \Answer (i) 4 km per day.
+  (ii) When we measure on the $w$th Friday (the worst possible day) we get $(0+0+4+4+4+4+4)w$ kilometers in total, for $7w$ days, which means $\frac{20}{7}<2.9$ kilometers amortised.
   \Exercise
-  Ran is also a runner.
+  Ran is also a reluctant runner.
   He rolls a die every morning and runs as many kilometers.
-  What is the average number of kilometers Ran runs per day?
-  Worst case? 
-  Amortised?
+  (i) What is the expected number of kilometers Ran runs per day, assuming he has a perfect die?
+  (ii) What is the worst-case number of kilometers Ran runs per day?
+  (iii) For any sequence of days starting on a Saturday, what is the worst-case amortised number of kilometers Ran runs per day? (Note that this answer must hold \emph{even if his dice are cursed}.)
+  \Answer
+  (i) $\frac{7}{2}$. (ii) $6$. (iii) $\frac{5\cdot 6}{7} = \frac{30}{7} \sim 4.28$.
+  \Exercise
+  My phone company charges 10 DKK for 1 minute of voice call.
+  This is exorbitant, but I never use my phone for making a phone call anyway.
+  According to the contract, I have to pay at least 100 DKK per month for voice calls whether I use them or not, but the contract automatically `rolls over' the unused minutes to the next month.
+  I have call my mum for Christmas for a 2-hour call.
+  Describe the expense in terms of `money I spend on voice calls each month' in the worst case and in the amortised sense.
+  \Answer
+  In the worst month (December), I spend 1200 DKK (which are indeed removed from my account of unused talk minutes at the phone company).
+  In the amortized sense, I spend 100 DKK per month (which are indeed removed from my bank account).
+  If you want to be precise, the contract must have started in January.
+  \Exercise 
+  A multiride ticket in the Danish amusement part Tivoli costs 200 DKK and is valid for 10 rides. 
+  What is the worst case cost for a single ride? 
+  What is the amortised cost for a ride?  
+  (\emph{Careful!})
 \end{ExerciseList}
 
-\subsection*{Proof of Proposition E}
+
+\section{Aggregate method}
+
+\section{Stack without Popping}
+\label{sec: nopop}
+
+\begin{theorem}[Proposition E in {[SW 1.4]}, reformulated]
+  \label{prop: E half}
+  In the resizing array
+  implementation of {\tt Stack} [SW, Algorithm~1.1], the push operation 
+  requires amortised constant time.
+\end{theorem}
+\begin{proof}
+  Starting from an empty data structure, consider any sequence of push operations of length $k$.
+  Our cost model is the number of array accesses.
+  The second line in the body of \texttt{push} always takes exactly one array acccess, for a total of $k$ accesses.
+
+  The difficult part are the array accesses resulting from the calls to \texttt{resize}.
+  A call to \texttt{resize}$(m)$ when the data structure contains $N$ elements requires $m+2N$ array accesses.
+  When \texttt{resize} is called from \texttt{push}, we have $m = 2N$, so $m+2N=4N$.
+  Such a call happens when $N$ is a power of $2$, i.e., for $N=1$, $2$, $4$, $8$, $\cdots$, $k'$,
+  where $k'$ is the largest power of $2$ such that $k'\leq k$.
+  In summary, the array accesses resulting from calls to resize result in at most
+  \[ 4(1 + 2 + 4 + 8 + \cdots + k') = 4(2k'-1)\leq 8k\,\] 
+  array accesses.
+  We conclude that the total number of array accesses for any sequence of $k$ calls to \texttt{push} is $9k$.
+\end{proof}
+
+\section{Mechanical Counter}
+
+Whenever a mechanical counter is incremented, the rightmost wheel (the
+``ones'') is turned. Every 10th increment, when the rightmost wheel
+transitions from 9 to 0, its left neighbour is turned as well. This
+effect continues to the left, so after $10^k-1$ increments, when the
+counter shows $k$ many 9s, the next increment will lead $k+1$ wheels to
+turn.
+
+\begin{figure}[htb]
+  \centerline{\includegraphics[width=3in]{Zaehlwerk_Schema_1.jpg}}
+  \centerline{\includegraphics[width=3in]{Zaehlwerk_Schema_2_clean.png}}
+\caption{A 5-digit mechanical counter.}
+\end{figure}
+
+In our terminology, the worst case number of operations for $N$
+increments is logarithmic. But in the amortised sense, the behaviour
+is much better:
+
+\begin{theorem}
+    Starting from 0, a mechanical counter needs a
+  constant amortised number of operations per increment.
+\end{theorem}
+
+\begin{proof}
+Consider a sequence of $N\geq 0$ increments. 
+  Some of them will turn exatly 1 wheel (namely the rightmost), others will turn more wheels.
+  The trick is and to look at each wheel separately.
+  Enumerate the  wheels $0,\ldots, k-1$ from right to left, so wheel~$0$ shows the least significant digits.  
+  Note that the number of wheels needed is exactly the number of digits of $N$ (in the decimal representation), which is  $k=\lfloor \log_{10} N\rfloor + 1$.
+
+Wheel $0$ was rotated $N$ times. 
+  Wheel $1$ was rotated $\lfloor N/10\rfloor$ times.
+  In general, wheel $r$ was turned \[ \left \lfloor \frac{N}{10^r} \right\rfloor\quad\text{times}\qquad (0\leq r < k)\,.\]
+  Adding these contributions for the total number of operations, gives 
+\begin{multline*}
+ \left \lfloor
+\frac{N}{10^0} \right\rfloor +
+ \left \lfloor
+\frac{N}{10^1} \right\rfloor +
+\cdots +
+ \left \lfloor
+\frac{N}{10^{k-1}} \right\rfloor
+\leq \\
+\frac{N}{10^0} +
+\frac{N}{10^1} +
+\cdots +
+\frac{N}{10^{k-1}} 
+  =
+N\left(\frac{1}{10^0}+\frac{1}{10^1}+\cdots+\frac{1}{10^{k-1}} \right) =\\
+  N\left(1 + \frac{1}{10} + \frac{1}{100} + \cdots +\frac{1}{10^{k-1}} \right)
+< 2N.
+\end{multline*}
+This finishes the proof.
+\end{proof}
+
+\begin{ExerciseList}
+  \Exercise{}
+  Repeat the above argument, but for a \emph{binary} counter.
+  (Every wheel contains only two digits, $0$ and $1$.)
+  \Answer
+  Now $k=\lceil \log_2 N\rceil + 1$.
+  The total number of rotations becomes $\lceil N/2^0\rceil+ \cdots+ \lceil N/2^{k-1}\rceil  \leq N/(1 + \frac12 + \frac14 + \frac18 +\cdots )= 2N$. 
+\end{ExerciseList}
+
+\section{Accounting method}
+
+What we will do now is to show that Prop.~\ref{prop: E half} is still true when I remove ``{\tt push()}'':
+
+\begin{theorem}[Proposition E in SW 1.4 in full, reformulated]
+  \label{prop: E}
+  In the resizing array
+  implementation of {\tt Stack} (SW Algorithm 1.1), the amortized number of
+  array accesses per operation is constant in the worst case.
+\end{theorem}
+
+So now the claim is stronger; it talks about any sequence of operations (including pops), instead of only pushes.
+Intuitively, the claim  sounds reasonable, since {\tt pop()} only makes the
+stack smaller, whereas the really expensive operation happens only when
+the stack grows and causes and expensive {\tt resize()}.
+However, even though this argument sounds reasonable, it is \emph{wrong}.
+The next section shows why.
+\section{Stingy resizing array}
+\label{sec-1.2}
+
+We will change algorithm~1.1 to halve the size of {\tt a} as soon as
+it can.  
+More specifically, let algorithm~1.1' be the same as algorithm 1.1,
+with the following change in the implementation of {\tt pop()}, where
+a {\tt 4} was replaced by a {\tt 2}.
+To be quite precise, we change the line
+\begin{quote}
+  {\tt if (N > 0 \&\& N == a.length/4) resize(a.length/2);}
+\end{quote}
+to 
+\begin{quote}
+  {\tt if (N > 0 \&\& N == a.length/2) resize(a.length/2);}
+\end{quote}
+   
+Note that the implementation remains \emph{correct} (in the sense that it correctly implements a stack), and it will even save space. 
+However, we can no longer guarantee the performance of Prop.~\ref{prop: E}.
+
+\begin{ExerciseList}\small
+  \Exercise{}
+  Exhibit a sequence of operations for which algorithm~1.1' requires a quadratic number of array accesses.
+\end{ExerciseList}
+
+In other words, the sequence of operations from the preceding exercise requiers a linear number of array accesses \emph{per operation} on the average, much worse than the constant number
+promised by Prop.~\ref{prop: E}.
+We must resign ourselves to the fact that Prop.~\ref{prop: E} does not hold for algorithm~1.1'.
+Since it does hold for algorithm~1.1, the argument needs to become quantitative somewhere---it must acknowledge the difference between 4 and 2.
+Our intuitive argument was purely qualitative, so it can't work.
+
+\section{Amortized Analysis of Resizing Array}
 
 We rephrase the claim with our new terminology:
 
-   
-\begin{quote}{\bf Proposition E.} 
+\begin{theorem}[Prop 1.1, rephrased]
   In the resizing array implementation of {\tt Stack} (Algorithm 1.1),
   the amortised number of array accesses per operation for any
   sequence of operations starting from an empty data structure is
   constant in the worst case.
-\end{quote}
-
+\end{theorem}
+\begin{proof}
 We will pretend that every array access costs one coin.  
 We associate a (ficticious) piggy bank with our data structure and
 make every call of {\tt push()} and {\tt pop()} deposit a certain
 number of coins in the bank.  
 (Determining how many coins is the technically difficult part of the
 argument.) 
-The aim is to have the pig finance every call of {\tt resize()}.
+The aim is to have the pig bank-roll every call of {\tt resize()}.
 
 Let my pull the right constants out of my hat: {\tt push()} shall
 deposit 8 coins, {\tt pop()} shall deposit 4 coin.%
@@ -233,7 +367,7 @@ that out of my hat as well:
   a}: from looking at {\tt resize()} we can see is that there are
 $\mathtt{max}-N$ free cells, and we already observed above that
 $\mathtt{max}=2N$.
-\begin{marginfigure}
+\begin{figure}
   \begin{tikzpicture}
     \draw (0,0) 
           node[anchor=south east] {\texttt{a[]}}
@@ -247,7 +381,7 @@ $\mathtt{max}=2N$.
           (2.1,-.1);
   \end{tikzpicture}
   \caption{The data structure immediately after {\tt resize()}.}
-\end{marginfigure}
+\end{figure}
 
 
 
@@ -260,7 +394,7 @@ in the bank.
   \texttt{push()} since the last \texttt{resize()}. Each
   \texttt{push()} deposited 8 coins, so there are $4N$ coins, as
   needed.
-\begin{marginfigure}
+\begin{figure}
   \begin{tikzpicture}
     \draw (0,0) 
           node[anchor=south east] {\texttt{a[]}}
@@ -271,12 +405,12 @@ in the bank.
   \end{tikzpicture}
   \caption{The data structure immediately before \texttt{push()} calls
     \texttt{resize()}.}
-\end{marginfigure}
+\end{figure}
 \item If the call came from \texttt{pop()}, i.e., to prevent underflow,
   then there must have been at least $N$ calls to \texttt{pop()} since
   the last \texttt{resize()}. Each \texttt{pop()} deposited 4 coins,
   so there are $4N$ coins, as needed.
-\begin{marginfigure}
+\begin{figure}
   \begin{tikzpicture}
     \draw (0,0) 
           node[anchor=south east] {\texttt{a[]}}
@@ -290,18 +424,18 @@ in the bank.
           (1.1,-.1);
   \end{tikzpicture}
   \caption{The data structure immediately before \texttt{pop()} calls {\tt resize()}.}
-\end{marginfigure}
+\end{figure}
 \end{itemize}
-This finishes the proof of proposition E.
+\end{proof}
 
-\begin{ExerciseList}\small
+\begin{ExerciseList}
   \Exercise \label{ex: only push}Can we charge all costs to
   \texttt{push()}? How much does it have to pay if \texttt{pop()} pays nothing?
   \Exercise Can we charge all costs to
   \texttt{pop()}? How much does it have to pay if \texttt{push()} pays nothing?
 \end{ExerciseList}
 
-\subsection{Localising the piggy bank argument}
+\section{Localising the piggy bank argument}
 
 Sometimes it is easier to localise the accounting argument by removing
 the fictional piggy bank and depositing the coins in the data
@@ -326,7 +460,7 @@ For example, the 4 coins deposited by {\tt pop} in position {\tt
 cells {\tt temp[1]} and {\tt temp[N+1]}, and the two accesses in {\tt
   temp[1] = a[1]}.
 
-\begin{figure}
+\begin{figure*}
   \tikzstyle{cell}=[draw,on chain,minimum width=6mm,
   font=\tiny\tt, text height=1.25ex, text depth=.25ex]
   \tikzstyle{coin}=[draw,circle, on chain,inner sep= 1pt, fill=white,font=\tiny\sf]
@@ -396,66 +530,14 @@ cells {\tt temp[1]} and {\tt temp[N+1]}, and the two accesses in {\tt
     new array {\tt temp}, the R coin is spent reading from {\tt a},
     and the W coin is spent writing to {\tt temp}. In the new {\tt a}
     (which is {\tt temp}), there is no money.  }
-\end{figure}
+\end{figure*}
 
 But it's a matter of taste. I like the local argument better for
 exercise~\ref{ex: only push}.
 
 
-\section{Mechanical Counter}
 
-Whenever a mechanical counter is incremented, the rightmost wheel (the
-``ones'') is turned. Every 10th increment, when the rightmost wheel
-transitions from 9 to 0, its left neighbour is turned as well. This
-effect continues to the left, so after $10^k-1$ increments, when the
-counter shows $k$ 9s, the next increment will lead $k+1$ wheels to
-turn.
-
-\begin{figure}[htb]
-\centerline{\includegraphics[width=2in]{Zaehlwerk_Schema_1.jpg}
-$\quad$\includegraphics[width=2in]{Zaehlwerk_Schema_2_clean.png}}
-\caption{A 5-digit mechanical counter.}
-\end{figure}
-
-In our terminology, the worst case number of operations for $N$
-increments is logarithmic. But in the amortised sense, the behaviour
-is much better:
-
-\begin{quote}
-  {\bf Proposition C.}  Starting from 0, a mechanical counter needs a
-  constant amortised number of operations per increment.
-\end{quote}
-
-To establish this, we can use the ``easy'' aggregate method. Let
-$N\geq 0$
-be the total number of increments, and let us look at each wheel
-separately. Number then $0,\ldots, k-1$ from right to left, so wheel~$0$
-are the ones and $k=\lfloor \log_{10} N\rfloor$.
-
-Wheel $0$ was rotated $N$ times. Wheel $1$ was rotated $\lfloor
-N/10\rfloor$ times. In general, wheel $r$ was turned \[ \left \lfloor
-\frac{N}{10^r} \right\rfloor\] times ($0\leq r < k$). Summing these
-contributions for the total number of operations, gives 
-\begin{multline*}
- \left \lfloor
-\frac{N}{10^0} \right\rfloor +
- \left \lfloor
-\frac{N}{10^1} \right\rfloor +
-\cdots +
- \left \lfloor
-\frac{N}{10^{k-1}} \right\rfloor
-\leq \\
-\frac{N}{10^0} +
-\frac{N}{10^1} +
-\cdots +
-\frac{N}{10^{k-1}} 
-=
-N\left(\frac{1}{10^0}+\frac{1}{10^1}+\cdots+\frac{1}{10^{k-1}} \right)
-< 2N.
-\end{multline*}
-This finishes the proof.
-
-\begin{ExerciseList}\small
+\begin{ExerciseList}
 \Exercise
 Prove proposition~C using the piggy bank method instead.
 If you use the local argument, where does the money go?
@@ -472,11 +554,30 @@ How little do you actually need?
  What if wheel $k$ costs $10^k$? $11^k$?
 \end{ExerciseList}
 
+
+\chapter{Union--Find Variants}
+
+\begin{summary}
+In this section we consider two variants of union--find, and present careful analyses of their amortised running times.
+
+This makes sense after [SW] 1.5.
+\end{summary}
+
+
+The union--find analyses in this chapter serve primarily as examples of nontrivial applications of the aggregate method; the weighted quick-union structure is better than both of our variants in this section.
+However, both data structures are examples of more general algorithmic design principles that are very useful in other contexts:
+\begin{enumerate}
+  \item if you have to update parts of a data structure, favour decision that update the \emph{smaller} part.
+    This is the idea behind the \emph{weighted} version of quick-find.
+  \item \emph{memoization}: if you've performed a computation, store its result, so as to avoid recomputing it later.
+    This is the idea behind \emph{path compression}.
+\end{enumerate}
+
+Both of these ideas are intuitively clever, and worst-case analysis is unable to establish this intuition.
+In contrast, the amortized analysis shows in both variants that they are worth doing.
+
 \section{Weighted quick-find}
 
-\emph{This makes sense after [SW] 1.5}
-
-\bigskip
 We return to the first, very simple union-find data structure of [SW],
 called \emph{quick-find}. 
 
@@ -513,26 +614,36 @@ Figure \ref{fig: WUF} shows the this situation, and the situation
 after another call to {\tt union()}. 
 An implementation is given in figure~\ref{fig: WUF impl}.
 
-\begin{marginfigure}
+\begin{figure}
 \begin{tikzpicture}[font=\tt,scale=.5,every node/.style={draw,circle,
     inner sep=1pt}]
   \node (9) at (0,0) {9};
   \node (8) at (1,0) {8};
   \node (3) at (2,0) {3};
-  \node (4) at (3,1) {4};
+  \node (4) at (1,2) {4};
+  \foreach \x in {9,8,3} 
+    \draw[->] (\x)--(4);
 
   \node (7) at (4,0) {7};
   \node (1) at (5,0) {1};
   \node (2) at (6,0) {2};
   \node (0) at (7,0) {0};
   \node (5) at (8,0) {5};
-  \node (6) at (9,1) {6};
-  \draw[->] (7)--(1)--(2)--(0)--(5)--(6).. controls(5,1)..(7);
-  \draw[->] (9)--(8)--(3)--(4)..controls(1,1)..(9);
+  \node (6) at (6,2) {6};
+  \draw[->] (7)--(1);
+  \draw[->] (1)--(2);
+  \draw[->] (2)--(0);
+  \draw[->] (0)--(5);
+  \foreach \x in {7,1,2,0,5} 
+    \draw[->] (\x)--(6);
+  \draw[->] (6).. controls(4,2)..(7);
+  \draw[->] (9)--(8);
+  \draw[->] (8)--(3);
+  \draw[->] (4)..controls(0,2)..(9);
 
   \node[draw=none,rectangle] at (1,-1) {first} edge [->] (9);
-  \node[draw=none,rectangle] at (2,2) {from} edge [->] (4);
-  \node[draw=none,rectangle] at (8,2) {to} edge [->] (6);
+  \node[draw=none,rectangle] at (3,3) {from} edge [->] (4);
+  \node[draw=none,rectangle] at (7,3) {to} edge [->] (6);
 \end{tikzpicture}
 
 \bigskip
@@ -548,7 +659,7 @@ An implementation is given in figure~\ref{fig: WUF impl}.
   \node (2) at (6,0) {2};
   \node (0) at (7,0) {0};
   \node (5) at (8,0) {5};
-  \node (6) at (9,1) {6};
+  \node (6) at (4,2) {6};
   \draw[->]   (9)--(8)--(3)--(4)--(7)--(1)--(2)--(0)--(5)--(6)
   ..controls(1,1)..(9);
 
@@ -559,109 +670,71 @@ An implementation is given in figure~\ref{fig: WUF impl}.
 \bigskip
 \caption{\label{fig: WUF}{\tt union(1,8)}, where {\tt id[8] == 4} and {\tt id[1] ==
     6}.  The {\tt next} pointers are shown.}
-\end{marginfigure}
+\end{figure}
 
 
 \begin{figure}
-\begin{tikzpicture}[remember picture,overlay] 
-  \draw [fill=orange!30]
-  (current page.south west) rectangle (current page.north east); 
-\end{tikzpicture}
-
-Algorithm A.1 Weighted quick-find implementation
-
-\small
-\begin{lstlisting}[basicstyle=\ttfamily,backgroundcolor=\color{white},
-  frame=single,rulecolor=\color{gray!20},framesep=10pt, linewidth=12cm]
-public class WeightedQuickFind
-{
-  private int[] id, sz, next;
-  private int count;
-
-  public WeightedQuickFind(int N)
-  {
-    count = N;
-    id = new int[N];
-    next = new int[N];
-    sz = new int[N];
-    for (int i = 0; i < N; i++) 
-    { 
-      id[i] = i;
-      next[i] = i;
-      sz[i] = 1;
-    }
-  }
-
-  private void rename(int from, int to)
-  {
-    int first = next[from];
-    for (int i = first; i != from; i = next[i])
-	id[i] = to;
-    id[from] = to;
-    next[from] = next[to];
-    next[to] = first;
-    sz[to] += sz[from];
-  }
-
-  public void union(int p, int q) 
-  {
-    int pID = find(p); 
-    int qID = find(q);
-    if (pID == qID) return;
-    if (sz[pID] < sz[qID]) rename(pID,qID);
-    else                   rename(qID,pID);
-    count--;
-  }
-  \\ see [SW], sect. 1.5 for find, count, connected, main
-}
-\end{lstlisting}
-\caption{\label{fig: WUF impl}Weighted quick-find.}
+  \begin{tabbing}
+   \quad\=\quad\=\quad\=\kill\\
+    \textbf{public class} WeightedQuickFind \{\\
+\>  private int[] id, sz, next;\\
+\>  private int count;\\
+\>\\
+    \>  public WeightedQuickFind(int $N$)  \{\\
+   \> \>    count = $N$;\\
+    \>\>    id = new int[$N$];\\
+    \>\>    next = new int[$N$];\\
+    \>\>    sz = new int[$N$];\\
+    \>\>    for (int $i$ = 0; $i$ < $N$; $i$++) \{ \\
+\>\>\>      id[$i$] = $i$;\\
+\>\>\>   next[$i$] = $i$;\\
+    \>\>\>      sz[$i$] = 1;\\
+\>\>    \}\\
+\>  \}\\
+\>\\
+\>  private void rename(int from, int to) \{ \\
+\>\>    int first = next[from];\\
+    \>\>    for (int $i$ = first; $i$ != from; $i$ = next[$i$])\\
+\>\>\>	id[$i$] = to;\\
+\>\>    id[from] = to;\\
+\> \>   next[from] = next[to];\\
+\>  \>  next[to] = first;\\
+\> \>   sz[to] += sz[from];\\
+\>  \}\\
+\>\\
+\>  public void union(int $p$, int $q$) \{\\ 
+    \>\>    int pID = find($p$); \\
+\>\>    int qID = find($q$);\\
+\>\>    if (pID == qID) return;\\
+    \>\>    if (sz[pID] < sz[qID]) \= rename(pID,qID);\\
+\>   \> else                  \> rename(qID,pID);\\
+\>\>    count -= $1$;\\
+\>  \}\\
+\}
+  \end{tabbing}
+\caption{\label{fig: WUF impl}Weighted quick-find. 
+  See [SW, sec. 1.5] for find.}
 \end{figure}
 
 
 Intuitively, we have made our data structure a lot faster.
-For instance, consider the sequence of $N$ unions in Figure~\ref{fig: fast sequence}.
-\begin{marginfigure}
-  \begin{tabbing}
-    $N$\\
-    {\tt 0 1}\\
-    {\tt 1 2}\\
-    {\tt 2 3}\\
-    {\tt 3 4}\\
-  $\vdots$\\
-    $(N-2)$ $(N-1)$\\
-  \end{tabbing}
-\end{marginfigure}
-Each {\tt union} takes constant time, whereas the original {\tt QuickFind} data structure would have used linear time.
+For instance, consider the sequence of $N-2$ unions with arguments $(0,1)$, $(1,2)$, $(2,3)$, $\ldots$, $(N-2,N-1)$.
+Each operations takes constant time, whereas the original {\tt QuickFind} data structure would have used linear time.
 This is great progress.
 Unfortunately, our usual way of analyses is unable to detect that improvement, because we usually are interested in \emph{worst-case} running times.
 And the worst case running time of {\tt WeightedQuickFind} is quite bad:
 
-\begin{quote}
-  {\bf Proposition.}
-  A call to {\tt union()} in {\tt WeightedQuickFind} can take linear time in the worst case.
-\end{quote}
+\begin{ExerciseList}
+  \Exercise{}\label{ex: quick-find worst case}
+  Exhibit a call to {\tt union()} for which {\tt WeightedQuickFind} that takes linear time.
 
-\begin{marginfigure}
-  \begin{tabbing}
-    $N$\\
-    {\tt 0 2}\\
-    {\tt 1 3}\\
-    {\tt 2 4}\\
-    {\tt 3 5}\\
-  $\vdots$\\
-    $(N-4)$ $(N-2)$\\
-    $(N-3)$ $(N-1)$\\
-    $(N-2)$ $(N-1)$\\
-  \end{tabbing}
-\end{marginfigure}
-To see that this is true, consider the sequence of operations in Figure~\ref{fig: slow}.
-The very last call to union, when all the odd elements are united with the even elements, leads to $\tilde N$ array accessses.
-(This happens in {\tt rename}, when the for-loop updates $\frac{1}{2}N$ entries in the {\tt id} array.)
+  \Answer{} Begin with $k-2$ calls to union with arguments $(0,2)$, $(1,3)$, $(2,4)$, $\ldots$, $(k-2, k)$.
+  At this stage, all the odd elements are in their own component, and all the even elements are in their own component, each of size $\sim \frac12 k$.
+  Now a single call to union$(0,1)$ will have to access $\sim12 k$ array elements of \texttt{id}.
+\end{ExerciseList}
 
-Note that while this statement is true, it is also very pessimistic.
-
-\begin{quotation}
+Again, the proper way to analyse the data structure is the amortized point of view.
+\footnote{
   Before we continue, let's remind ourselves that there is a good reason for our usual focus on the worst case.
   We normally don't evaluate our data structure by its behaviour on particularly well-chosen inputs that make the data structure look good. 
   The \emph{best-case} time for {\tt QuickFind} was constant as well, after all: Just call {\tt union(0,1)} $N$ times in a row.
@@ -676,56 +749,186 @@ Note that while this statement is true, it is also very pessimistic.
   First, it is mathematically sophisticated and requires some exposure to discrete probability theory.
   Second, it tells us surprisingly \emph{little} about our data structure, because the result depends very heavily on the choice of distribution.
   (For instance, why should $p$ and $q$ be independent? 
-  Why should they be uniformly distributed instead of normal, or Poisson, or a dozen other distributions that appear in real life?
+  Why should they be uniformly distributed instead of normal, or Poisson, or a dozen other distributions that appear in real life?)
   To appreciate these questions, imagine the union--find data structure used in an algorithm for Kruskal's algorithm for minimum spanning tree.
   Then the $p$ and $q$ depend on the structure of the input graph and the weight of its edges---that is absolutely not a uniformly random process!
   It would be much more interesting to define, say `the input sequence arising from the union--find calls of an execution of Kruskal's algorithm on a random graph.'
-  But this gets \emph{very} difficult to analyse (including specific details about the implmentation!), and only shifts the question to `what kind or random process did the graph arise from'?
+  But this gets \emph{very} difficult to analyse (including specific details about the implementation of Kruskal!), and only shifts the question to `what kind or random process did the graph arise from'?
   No matter how we try to define `random inputs,' we find ourselves in the position of having to motivate the distribution.
   
   The discussion above largely served to motivate why we try to avoid the term `average.'
   It's not very well defined, and of very questionable value.
   (Moreover, we can't do the math.)
-  )
-\end{quotation}
+}
 
-\medskip
-After rejecting all these methods of analysis we turn to amortised analysis.
 
-\begin{quote}
-  {\bf Proposition A4.} In the weighted quick-find implementation, {\tt union()} operation takes amortized logarithmic time in the worst case, beginning from an initialized data structure.
-\end{quote}
+\begin{theorem}\label{prop: weighted quick-find amortized}
+  In weighted quick-find for $n\geq 2$ elements, the {\tt union()} operation takes amortized time $O(\log n)$ in the worst case, beginning from an initialized data structure.
+\end{theorem}
 
-We can show this using the aggregate method, so we consider a sequence of $k$ calls to {\tt union()} and want to show that it takes $O(k\log k)$ time.
+\begin{proof}
+We can show this using the aggregate method, so we consider a sequence of $k$ calls to {\tt union()} and want to show that it takes $O(k\log n)$ time.
 
 We will count the number of updates of {\tt id[]} in {\tt rename()}, from the perspective of a single site $i$. 
 The crucial observation is that whenever the {\tt id} of $i$ is renamed, the size of its component at least doubles.
 (This is because we always rename the smaller of two unioned components, and the size of the union is at least twice of the smaller one.)
-On the other hand, no component can ever be larger than $k+1$. 
-(This is because every elemented started out in a component of its own.
-At some time, that component must have been united with the others, which must have required a call to {\tt union()}.)
-Thus, the component of $i$ has been doubled no more than $\log (k+1)$ times.
-In particular, {\tt id[i]} has been changed at most $\log (k+1)$ times.
+On the other hand, no component can ever be larger than $n$. 
+Thus, the component of $i$ has been doubled no more than $\log_2 n$ times.
+In particular, {\tt id[i]} has been changed at most $\log_2 n$ times.
 
 Next, we need to argue that at most $2k$ sites were renamed during the $k$ operations.
 This is because a site that never appeared as one of the two arguments in some call to {\tt union} still remains in its original component.
 Thus, at most $2k$ sites are ever renamed.
-We argued above that just saw that each site gets renamed at most $\sim\log k$ times in total.
-Thus, the total number of updates to {\tt id} is $\sim k\log k$. 
+We argued above that just saw that each site gets renamed at most $\log n$ times in total.
+Thus, the total number of updates to {\tt id} is $k\log_2 n$. 
 This finishes the proof of propostion A4.
-\bigskip
+\end{proof}
 
-Let us reiterate a few points about the formulation of proposition 4A:
+Let us reiterate a few points about the formulation of Prop.~\ref{prop: weighted quick-find amortized}
 \begin{enumerate}
   \item  Note the role that `worst case' plays:
     It says that in \emph{any}, even the most maliciously constructed input sequence, is is \emph{impossible} that the first $k$ operations take more than $O(k\log k)$ time in total.
     (Without `worst case', proposition A4 remains true, since it also holds for `best case' or `average case' or `typical case', however you want to define them.
     But none of those statements are interesting, and all of them are weaker.)
 \item Note the role that `amortized' plays:
-  Without it, proposition 4A is plainly false; there are operations that take linear time, as discussed above.
+  Without it, proposition 4A is plainly false; as shown by Exercise~\ref{ex: quick-find worst case}.
 \item Note the role that `beginning from an initialized data structure' plays. 
-  Without it, proposition 4A is plainly false; there are single operations that take linear time, as discussed above.
+  Without it, proposition 4A is plainly false: if we begin later, Exercise~\ref{ex: quick-find worst case} shows that there are sequences of length $1$ (namely ``union(0,1)'') that take time linear in the size of the data structure.
+    And if we begin earlier, then the initialisation itself takes linear time.
 \end{enumerate}
+
+\section{Unweighted Quick-Union with Path Compression}
+
+
+Assume that we extend the (unweighted) quick-union algorithm (SW, pp. 224) to include \emph{path compression} (but not  union-by-rank).
+To be precise, we rewrite the \texttt{find(int p)}-operation so that it links every site on the path from $p$ to the root directly to the root, like in Fig.~\ref{fig: path compression}
+
+\begin{figure}[h]
+  \[
+  \begin{tikzpicture}[scale = .5]
+  \node (p)    at (0,0) [circle, draw, inner sep = 2pt, label = left:$p$] {};
+    \node (idp)  at (.5,1) [circle, draw, inner sep = 2pt, label = right:{$\mathtt{id}[p]$}] {};
+  \node (dots) at (1,2) [circle, draw, inner sep = 2pt] {};
+  \node (r)    at (1.5,3) [circle, draw, inner sep = 2pt, label = right:$r$] {};
+    \node (q) at (1,0) [circle, draw, inner sep = 2pt, label = right:$q$] {};
+    \node (s) at (0, -1) [circle, draw, inner sep = 2pt, label = left:$s$] {};
+  \draw [->] (p) -- (idp);
+  \draw [->] (q) -- (idp);
+  \draw [->] (idp) -- (dots);
+  \draw [->] (dots) -- (r);
+    \draw[->] (s) -- (p);
+  \path [->] (r) edge [loop above] (r);
+\end{tikzpicture}
+\quad
+\text{is `shortcut' into}
+\quad
+  \begin{tikzpicture}[scale = .5]
+  \node (p)    at (0,0) [circle, draw, inner sep = 2pt, label = left:$p$] {};
+  \node (idp)  at (0.5,1) [circle, draw, inner sep = 2pt] {};
+    \node (dots) at (1,2) [circle, draw, inner sep = 2pt] {};
+  \node (r)    at (1.5,3) [circle, draw, inner sep = 2pt, label = right:$r$] {};
+    \node (q) at (1,0) [circle, draw, inner sep = 2pt, label = right:$q$] {};
+    \node (s) at (0, -1) [circle, draw, inner sep = 2pt, label = left:$s$] {};
+    \path [->,thick, red] (p) edge[bend left] (r);
+    \path [->,thick, red] (idp) edge[bend left] (r);
+  \draw [->] (dots) -- (r);
+  \path [->] (r) edge [loop above] (r);
+  \draw [->] (q) -- (idp);
+    \draw[->] (s) -- (p);
+\end{tikzpicture}
+\]
+  \caption{\label{fig: path compression}
+  Path compression resulting from the call \texttt{find($p$)}.
+  The edges on the path from $p$ to the root $r$, except for the last edge, are removed and replaced by new edges (shown red.)
+  The resulting distance to the root for every node on the path is now $1$.
+  }
+\end{figure}
+The idea is that since the algorithm is `touching' each of these nodes anyway, it might as well spend slightly more time shortcutting them to link directly to the root, so that \emph{next} time they'll be close to it.
+
+One elegant way of implementing that is recursively, as follows:
+\begin{quote}
+\begin{tabbing}
+  $\quad$\=\kill
+  \textbf{public int} find(\textbf{int} $p$) \{\\
+  \>  \textbf{if} (id[$p$] == $p$) \textbf{return} $p$;\\
+  \>  \textbf{int} $r$ = find(id[$p$]);\\
+\>  id[$p$] = $r$;\\
+  \>  \textbf{return} $r$;\\
+  \}
+\end{tabbing}
+\end{quote}
+
+\begin{ExerciseList}
+  \Exercise{} 
+  Give a nonrecursive implementation of the same idea. 
+\end{ExerciseList}
+
+We will show that this data structure is as good as \emph{weighted} quick-union, at least in the amortised sense:
+
+\begin{theorem}[Exercise 1.5.12 in SW]\label{prop: path compression}
+  (Unweighted) quick-union with path compression requires amortised logarithmic time per update.
+\end{theorem}
+
+Before proving this, convince yourself that amortisation is crucial for this claim.
+For unlike for weighted quick-union, we cannot establish a logarithmic time bound \emph{in the worst case}:
+
+\begin{ExerciseList}
+  \Exercise{} Exhibit a sequence of operations that shows that (unweighted) quick-union with path compression requires linear time per update in the worst case.
+  \Answer{}  Begin with $N$ unions
+  \texttt{union($0$,$1$)}, 
+  \texttt{union($1$,$2$)}, 
+  $\ldots$, 
+  \texttt{union($N-2$,$N-1$)}.
+  (Each took constant time, the data structure is now a directed path of length $N$.)
+  Now call \texttt{find($0$)}.
+  This single operation requires linear time, so the worst case time for an operation is (at least) linear.
+\end{ExerciseList}
+
+\begin{proof}[Proof of Prop.~\ref{prop: path compression}]
+  We need to consider an arbitrary sequence of $N$ operations (unions or finds) and show that the total time for these operations is $O(N\log N)$.
+  Our cost model will be the total number of edges that exist at any time during the evolution of the data structure.
+
+  We let $T_u$ denote the subtree rooted at node $u$, including $u$ itself.
+  An edge $e$ from $u$ to $v$ is called \emph{heavy} if, at the time of its destruction, it accounted for at least half of its parent's weight in the sense that $|T_u| \geq \frac12|T_v|$.
+  (A self-loop is always heavy.)
+  Otherwise it is \emph{light}; this includes those edges that are never destroyed.
+  We show that both the number of light edges and the number of heavy edges are at most $O(n\log n)$.
+
+  \emph{Light:}
+  There is a negligible number of $n$ (light) edges that are never destroyed and survive to the end.
+  For the others, a light edge is destroyed only when it lies on the path traversed by a find operation.
+  Consider such a path $v_0$, $\ldots$, $v_r$ from top to bottom, and let $e$ from $u$ to $v$ be one of its edges. 
+  Because $e$ is light, the corresponding subtrees double in size: $|T_v|> 2|T_u|$.
+  Thus, if the path contains $k$ light edges, we have \[|T_{v_r}| > 2^k |T_{v_0}|\,.\]
+  Since $|T_{v_r}|\leq n$ and $|T_{v_0}| \geq 1$, we have $k\leq\log_2 n$.
+  Thus, the path contains at most $\log_2 n$ light edges, and therefore the find operation cannot destroy more than that.
+  Since there are at most $3N$ find operations, we conclude that the total number of light edges is $O(N\log N)$.
+ 
+  \emph{Heavy:}
+  We associate each heavy edge $e$ from $u$ to $v$ with its target $v$.
+  Let $e_0,\ldots, e_r$ be the heavy edges pointing to $v$ at any time during the evolution of the data structure.
+  In particular, $e_0$ is the initial self-loop from $v$ to $v$.
+  Let $w_0,\ldots, w_r$ denote the \emph{weight} of $v$, i.e., the size $|T_v|$ of the subtree rooted at $v$, at the time when $e_0,\ldots, e_r$ are destroyed.
+  After $e_0$ is destroyed (by a union operation) and vertex $v$ ceases to be a root, its weight can only decrease.
+  Moreover, because each $e_i$ is heavy, we know that the removals of $e_1$, $\ldots$, $e_r$ each reduced the weight of $v$ by at least half.
+  Thus, 
+  \[ w_0\geq w_1\geq 2 w_2 \geq 2^2w_3\cdots\geq 2^{r-1} w_r\,.\]
+  Since each $w_i$ is an integer between $1$ and $N$, we have $r - 1\leq \log_2 N$.
+  There are $N$ different target vertices, so the total number of heavy edges is $O(N\log_2 N)$.
+\end{proof}
+
+\begin{ExerciseList}
+  \Exercise{}
+  The idea of \emph{path halving} is a simpler version of path compression. 
+  The find operation merely connects every vertex to its granparent on the path, instead of to the root.
+  Does the above proof still apply?
+  \Answer{}
+  Almost.
+  The cost model is still valid, since number of edges still accounts for the number of operations, up to linear terms.
+  But it is less clear that a vertex only ever loses weight after it ceases to be a vertex.
+  (After all, path halving may connect a vertex to a fresh parent that is not a root.)
+  However, no vertex ever receices a new \emph{descendant} after it loses its self-loop, so the argument remains true.
+\end{ExerciseList}
 
 \section{On the word `average' in [SW]}
 
@@ -741,4 +944,9 @@ However, as a possible source of confusion the word `average' is used in Proposi
 This statement describes the running time of a single run of an algorithm on a random input (namely, a sequence of uniformly and independently distributed integers).
 This is precisely \emph{not} how `average' is used in proposition A4:
 There, the sequence (which defines repeated operations on a data structure) is nonrandom (it is, in fact, a worst case sequence.)
+
+\chapter{Answers}
+
+\shipoutAnswer
+
 \end{document}
