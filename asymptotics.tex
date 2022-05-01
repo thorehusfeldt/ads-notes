@@ -1,0 +1,977 @@
+%proo\documentclass[acmtog,nonacm]{acmart}
+\documentclass{tstextbook}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing,positioning,chains, shapes.geometric}
+\usepackage{tipa}
+\usepackage{color}
+\usepackage{listings}
+\makeatletter
+\def\lmtt@use@light@as@normal{}
+\usepackage{etoolbox}
+%\usepackage{amsmath}
+%\theoremstyle{plain}% default
+%\newtheorem{thm}{Theorem}[section]
+%\theoremstyle{definition}
+%\newtheorem{defn}{Definition}[section]
+
+\usepackage{booktabs}
+
+\input{vc.tex}
+
+
+\usepackage[lastexercise,answerdelayed]{exercise}
+\setlength{\Exesep}{.5ex}
+\setlength{\Exetopsep}{1em}
+\renewcommand{\ExerciseListName}{Exercise}
+\renewcommand{\AnswerListName}{}
+\renewcommand{\ExerciseHeaderTitle}{(\emph{\ExerciseTitle.})\ }
+\renewcommand{\ExerciseListHeader}{\ExerciseHeaderDifficulty%
+\textbf{\ExerciseListName\ExerciseHeaderNB.}\ \ExerciseHeaderTitle%
+\ExerciseHeaderOrigin\ignorespaces}
+\renewcommand{\AnswerListHeader}{\textbf{\ExerciseHeaderNB.\ }}
+
+\title{Additional Note for Algorithms and Data Structures}
+\author{Thore Husfeldt}
+\date{\small Revision {\tt \GITAbrHash}$\ldots$, \GITAuthorDate, \GITAuthorName}
+\begin{document}
+\maketitle
+
+\chapter{Asymptotic Notation: Definitions and Properties}
+
+\begin{summary}
+  This note includes a careful development of tilde and Landau notation.
+  	
+
+This note is about notation for the growth of functions encountered in the analysis of algortithms, sometimes called asymptotic\footnote{%
+  The term “asymptotic” is highly misleading, it means “not falling together”, highlighting the fact that the function \(x\mapsto 1/x\) never touches the x-axis (its “asymptote”).
+  This aspect of \emph{not touching} plays no role for us at all, it is in fact \emph{false}: 
+  Our asymptotic notions are reflexive, so a function is asymptotically itself.
+  You are advised to ignore your knowledge of Greek and read the word “asymptotically” as a synonym of “for large \(n\)“.}
+notation.
+\end{summary}
+
+\section{Why do this?}
+
+We begin by introducing notation, intuition, and rules for use.
+Precise definitions and explanation are given later.
+
+First, though: Why are we doing this at all?
+We need a toolset to compare functions, because we want to compare the running times of algorithms, which are given as functions (typically of the input size). 
+We both want to be able to say ``$f$ is roughly equal to $g$,''  and ``$f$ is bounded by $g$`` for a certain granularity of ``roughly'' that is both precise enough to be interesting and coarse enough to be useful.
+
+Note that we \emph{do} already a definition for have ``precisely equal,'' which is typically written as $f=g$ and defined as
+\[ f(x) = g(x)\qquad\text{for all $x$}\,.\]
+That was easy to define, but it is also quite useless for us; if $f(n) = n$ and $g(n)= n + 1$ then $f\neq g$ (but we want to treat those two running times as ``the same'').
+Similarly we \emph{do} already a definition for ``bounded by,'' typically written as $f\leq g$ and defined as
+\[ f(x) \leq g(x)\qquad\text{for all $x$}\,.\]
+This is also quite useless: if $f(n) = n^2$ and $g(n)= n^3$ then $f\not\leq g$ because $(-1)^2 \not\leq (-1)^3$.
+(But we really want to be able to say that a quadratic-time algorithm is better than a cubic-time one.)
+
+\section{Asymptotic equality: tilde}
+
+The notation \(f(x)\sim g(x)\), sometimes abbreviated to \(f\sim g\), is a “fuzzy version of \(f=g\).”
+
+\begin{definition}[Tilde, informally]
+We write \(f(x)\sim g(x)\) when \(f(x)/g(x)\) approaches \(1\) as \(x\) grows.
+\end{definition}
+
+
+\begin{example}
+Som usage examples are
+\[ n + 1 \sim n\,, \quad \binom{n}{3}\sim \textstyle\frac16n^3\,,\quad 3n\log n + 100 n \sim 3 n\log n\,. \] 
+To get a feeling for this, evalute the corresponding fractions for $n=1,10,100,1000,\ldots$ and
+  and use your good judgement.
+For instance, $n+1\sim n$ because \[
+  \frac{n+1}{n} \quad \text{grows as}\quad \frac{2}{1} =2, \frac{11}{10}=1.1, \frac{101}{100}=1.01, \frac{1001}{1000}=1.001,\ldots\,.
+\]
+Expecting no dramatic changes for larger $n$, we can confidently state that this sequence of numbers approaches $1$.
+
+On the other hand
+\[ 2n \not\sim n,\quad n^2 - n + 5 \not\sim n\,. \] 
+For instance, \[
+  \frac{2n}{n} \quad \text{grows as}\quad \frac{2}{1}, \frac{20}{10}, \frac{200}{100}, \frac{2000}{1000},\ldots
+\]
+all terms of which are equal to $2$.
+This does not approach $1$. 
+(Instead, it approaches $2$.)
+\end{example}
+
+\begin{exercise}
+  Argue by by manual computation, using an electronic calculator, or writing a programme, that
+  \begin{enumerate}
+    \item
+      $n\sim n-1$
+    \item
+  $\binom{n}{3}\sim \textstyle\frac16n^3$.
+    \item
+  $3n\log_2 n + 100 n \sim 3 n\log_2 n$.
+    \item
+      $\sqrt n\not\sim n$.
+    \item
+   $n^2 - n + 5 \not\sim n$.
+    \item
+      $\log_2 n\not\sim n$.
+    \item
+      $7\not\sim 5$.
+  \end{enumerate}
+\end{exercise}
+
+\begin{exercise}
+  True of false?
+  \begin{enumerate}
+    \item
+      $n\sim n+ \frac{1}{n}$
+    \item
+  $\log_2 n\sim \ln n$
+    \item
+      $n^{10000} \sim  n^{10001}$
+  \end{enumerate}
+\end{exercise}
+
+
+The notation \(f \sim g\) is read as “eff is asymptotically equal to gee”, or just “eff is tilde gee” among friends.
+
+\begin{theorem}[as a relation]
+  The relation \(\sim\) is an equivalence relation on the set of real functions.
+  That is, it is
+  \begin{description}
+  \item[symmetric:] \( f\sim g \) if and only if \( g\sim f\)
+  \item[reflexive:] \( f\sim f\)
+  \item[transitive:] if \( f\sim g \) and \(g\sim h\) then \(f\sim h\)
+  \end{description}
+\end{theorem}
+
+\begin{theorem}[Rules]
+  \label{prop: tilde rules}
+  Tilde notation satisfies the following rules:
+  \begin{enumerate}
+    \item If \(f_1\sim g_1\) and \(f_2 \sim g_2\) then \(f_1 \cdot f_2 \sim g_1 \cdot g_2\).
+    \item \(n +C\sim n\) for every constant \(C\)
+    \item \(n + \log_a n\sim n\) for any base $a>1$.
+    \item \label{item: tilde polynomial}
+      \(a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 \sim a_k n^k\)
+    \item \(\lfloor x \rfloor \sim \lceil x \rceil \sim x\)
+  \end{enumerate}
+\end{theorem}
+
+
+\begin{remark}
+  On the other hand,
+\begin{enumerate}
+  \item $\log_b n \not\sim \log_a n$ for $a\neq b$
+  \item $C  n \not\sim n$ for every constant $C\neq 1$
+  \item $n^a \not\sim n^b$ for $a\neq b$
+\end{enumerate}
+\end{remark}
+
+In summary, think of \(\sim\) as some fuzzy equality symbol.
+The most useful fuzziness is that we can disregard lower order terms (but have to pay attention to the constant in front of the highest-order term.)
+
+
+\section{Asymptotic bound: Big Oh}
+
+The notation \(f\in O(g) \), is a “fuzzy version of \(f\leq g\).”
+It is defined in terms of the \emph{set of functions} $O(g)$, which one can think of as all function that are ``$g$ times a positive constant'', i.e., 
+\[ O(g) = \{ \ldots, \frac{1}{100}g, \ldots,\frac12g, \ldots,g, \ldots,2g, \ldots,\pi g, \ldots,235g\ldots\}\,.\]
+
+We start with a precise definition for functions that are defined on the set of positive integers $\mathbf N =\{1,2,\ldots, \}$, which suffices for many of our applications.
+\begin{definition}[As linear  dominance, monovariate, on positive integers]
+  Let $f, g\colon \mathbf N\rightarrow\mathbf R_{\geq 0}$.
+  Then $f \in O(g)$ if there exist $c>0$ such that
+  \[ f(n)\leq cg(n)\quad\text{for all $n\in \mathbf N$}\,. \]
+\end{definition}
+
+The notation \(f \in O(g)\) is often read as “eff is big-oh of gee“, or just “eff is oh of gee”, or “eff is order of  gee.'' 
+
+\begin{example}
+Some usage examples are:
+  \[ n + 1 =O(n) \quad\text{ for $n\in\mathbf N$}\]
+  and
+  \[ n^2 -n + 5 =O(n^2) \quad\text{ for $n\in\mathbf N$}\]
+and also
+\[ 2n =O ( n) \quad\text{ for $n\in\mathbf N$}\,,\]
+but  
+\[ n^2 - n + 5 \notin O(n) \text{ for $n\in\mathbf N$}\,. \] 
+\end{example}
+
+Note that the analogue of $3n\log_2 n + 100 n\sim 3 n\log_2 n$ is suspiciously absent from the above example.
+We will come back to it.
+
+
+\begin{theorem}[as a relation]
+  \label{thm: Oh as a relation}
+The relation between \(f\) and \(g\) when \(f=O(g)\) is
+  \begin{description}
+    \item[reflexive:] \( f \in O(f)\)
+    \item[transitive:] if \( f\in O( g)\) and \(g\in O(h)\) then \(f\in O( h)\).
+  \end{description}
+\end{theorem}
+
+The $O$-relation is \emph{not} symmetric.
+For instance, $n^2\notin O(n)$ (even though $n\in O(n^2)$.)
+
+\begin{theorem}[rules] 
+  \label{thm: Oh rules}
+  $O$-notation satisfies the following rules for functions defined on the positive integers:
+
+  \begin{description}
+    \item[order-consistent] If \(f\leq g\) then \(f \in O(g)\).
+    \item[scale-invariance] \(O(\alpha f) = O(f)\) for every real number $\alpha > 0$.
+    \item[additive] \( O(f)+ O( g) = O(f + g)\).
+    \item[multiplicative] \( O(f)\cdot O( g) = O(f \cdot g)\).
+    \item[homogenuous] $fO(g) = O(fg)$ for every $n\in \mathbf N$
+    \item[sum is max] $O(f + g) = O(\max \{f, g\})$
+    \item[max is sum] $\max\{O(f) , O(g)\} = O(f) + O(g)$
+  \end{description}
+\end{theorem}
+
+\begin{example}
+  For $n\in\mathbf N$,
+\begin{enumerate}
+\item $\frac12 n \in O(n)$
+\item $3n \cdot \log^6 n \in O(n\log n)$
+\item $170 n \in O(n)$
+\item $170 n + 10 n \in O(n)$
+\item $170 n + \log n \in O(n)$
+\item $\ln n \in O(\log n)$
+\item $\log n \in O(\ln n)$
+\item $\log n \in O(n)$
+\item $\sqrt n \in O(n)$
+\item $n \in O(n^3)$
+\item $(\log_2 n)^3 \in O(n^{1/4})$
+\item $\frac16 n^3 \in O(n^3)$
+\item $\binom{n}{3} \in O(n^3)$
+\item $2^n \in O(3^n)$.
+\end{enumerate}
+\end{example}
+
+\begin{example}
+  \begin{enumerate}
+\item $n^2\notin O(n)$
+\item $n^2\notin O(n\log n)$
+\item $n\notin O(\log n)$
+\item $n\notin O(n/\log n)$
+\item $3^n\notin O(2^n)$
+\item $n^{1/4}\notin \log n$
+  \end{enumerate}
+\end{example}
+
+\section{Asymptotic Equality: Big Theta}
+
+The notation \(f\in O(g) \) is a “fuzzy version of \(f\leq g\).”
+In particular, it is \emph{more} fuzzy than $f\sim g$.
+
+\begin{definition}
+  $f\in \Theta(g)$ if $f\in O(g)$ and $g\in O(f)$.
+\end{definition}
+
+\begin{example}
+  For $n\in \mathbf N$, some usage examples are:
+\[ n + 1 \in \Theta(n), \quad n^2 - n + 5 \in \Theta( n^2), \] 
+and also
+\[ 2n \in \Theta ( n)\,,\]
+but  
+\[ n^2 - n + 5 \notin  \Theta(n)\,. \] 
+\end{example}
+
+\begin{theorem}[as a relation]
+  \label{thm: Oh as a relation}
+The relation between \(f\) and \(g\) when \(f\in \Theta(g)\) is an equivalence relation:
+  \begin{description}
+    \item[reflexive:] \( f \in \Theta(f)\)
+    \item[symmetric:] if \( f \in \Theta(g)\) then \(g \in \Theta(f)\)
+    \item[transitive:] if \( f\in \Theta ( g)\)  and   \(g= \Theta(h)\) then \(f= \Theta( h)\).
+  \end{description}
+\end{theorem}
+
+\section{Similarities and differences}
+
+%\begin{theorem}[tilde and Theta]\label{thm: tilde and Oh}
+%  If \(f\sim g\) then \(f \in \Theta(g)\) but not vice versa.
+%\end{theorem}
+%
+%\begin{theorem}[Theta and Oh]\label{thm: tilde and Oh}
+%  If \(f\in \Theta(g)\) then \(f \in O(g)\) but not vice versa.
+%\end{theorem}
+%
+%Let's establish rule~\ref{item: Oh polynomial} from Theorem~\ref{thm: Oh rule} using the above theorem:
+%
+%\begin{example}
+%  We will show \[ #    a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 =  O(n^k)\,.\]
+%  First, from Theorem~\ref{thm: tilde rules}(\ref{item: tilde polynomial}), we have
+%  \[ a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 \sim a_k n^k\,.\]
+%  Using Theorem~\ref{thm: tilde and Oh} we arrive at
+%  \[ a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 = O(a_k n^k)\,.\]
+%  Since $a_k$ is a constant, we also have $a_k n^k = O(n^k)$.
+%  Thus, using transitivity (Theorem~\ref{thm: Oh as a relation}), we can deduce
+%  \[ a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 = O(n^k)\,.\]
+%\end{example}
+
+\begin{example}
+  Recall that $\binom{n}{2} = \frac12 n(n-1) = \frac 12 n^2 - \frac12 n$.
+We can write
+  \[ \binom{n}{2} \sim \frac12 n^2  \]
+  because \[
+    \frac{\frac12 n^2 - \frac 12 n}{\frac12 n^2}   = 
+    1+ \frac{1}{n},\]
+  which tends towards $1$ as $n$ grows.
+
+ We can also write
+  \[ \binom{n}{2} \in O(n^2)\,,\]
+  because if $n\geq 0$, then 
+  \[\tfrac12 n^2 - \tfrac12 n \leq  \tfrac12 n^2 \leq n^2\,\]
+  so that $\binom{n}{2} \in O(n^2)$.
+  To be quite careful, we have used the definition of $O$ with $f(n)=\binom{n}{2}$, $g(n)=n^2$ and $c=1$.
+
+  \medskip
+  Both examples are expressions are ``what $\binom{n}{2}$ roughly is'', and are useful in differernt contexts.
+\end{example}
+
+\begin{exercise}
+  Give tilde and $O$ approximations of $\binom{n}{3}$.
+\end{exercise}
+
+\section{Traps and pitfalls}
+
+ \[3n\log n + 100 n = O(n\log n), \] 
+
+
+  We can  even establish
+  \[ \binom{n}{2} \in \Theta(n^2)\,,\]
+  for which we additionally have to prove $n^2\in O(\binom{n}{2})$.
+
+
+\section{Usage conventions}
+
+\subsection{In the wild}
+
+The curious expression \(O(1)\) means “any positive constant.” 
+Directly from the defintion it is the set of functions $f$ such that there is a number $c>0$ with $f(n)\leq c\cdot 1$.
+Examples are $\cos$ and $\sin$ (both of which are bounded by $1$.
+Typically, it is used for ``some constant, maybe $17$ or $18$ or something.''
+
+Expressions like $O(3n)$ makes sense, but are confusing and unprofessional and should be avoided; the expression $O(3n)$ means the same as $O(n)$.
+
+Similarly, don’t write ``the number of comparisons is $\sim 3n^2  - 5n +7$.''
+While it may not be \emph{false}, this expression signals lack of mastery of the notation, you should write
+``the number of comparisons is $\sim 3n^2$.''
+
+Similarly, you should reduce expressions inside a $O$:
+The expression $O(n^3 + n^2(n + 16n + \log n))$ is equal to $O(n^3)$;
+the two expressions mean exaclty the same.
+Since the whole point of $O$ was to reduce clutter, the latter form is strongly preferred.
+(The former form signals limited understand of how and why the notation is used.)
+
+Most users of this notation are mainly interested in performance guarantees in terms of upper bounds, so one often sees $O$ used where $\Theta$ would have been just as appropiate.
+
+\chapter{Daily Use}
+
+We write $\mathbf N=\{1,2,\ldots\}$ and $\mathbf R_{\geq 0}$ for the set of positive, nonzero reals.
+We consider
+\[ f\colon\mathbf N\rightarrow \mathbf R_{\geq 0}\,.\]
+
+\begin{definition}[Monovariate, nonzero O]
+  For $f,g\colon \mathbf N\rightarrow \mathbf R_{\geq 0}$ we write
+  $f\in O(g)$ if there exists $c>0$ such that $f(x) \leq cg(x)$ for all $x\in\mathbf N$.
+\end{definition}
+
+\begin{example}
+  $15\log n \in O(\log n)$.
+  $\frac{1}{64} n \in O(n)$.
+  $n \in O(n^2)$.
+\end{example}
+
+\begin{example}[Counterexample.]
+  $n^2 \notin O(n)$.
+\end{example}
+
+\begin{theorem}
+  The properties in Table~\ref{tab: monovariate} hold for
+  functions $f,g\colon \mathbf N\rightarrow \mathbf R_{\geq 0}$.
+\end{theorem}
+
+\begin{proof}
+  If $f\leq g$ then in particular $f(x)\leq 1\cdot g(x)$, so $f\in O(g)$.
+  The other proofs are tedious but easy.
+  For instance, let $h\in O(f) + O(g)$.
+  This means there is $f'\in O(f)$ and $g'\in O(g)$ such that $h=f'+g'$.
+  Since $f'\in O(f)$ there exists $c_1$ such that $f'(x)\leq c_1 f(x)$ for all $x\in \mathbf N$.
+  Similarly,  there exists $c_2$ such that $g'(x)\leq c_2g(x)$ for all $x\in \mathbf N$.
+  Thus, we have $h(x) = f'(x) + g'(x) \leq c_1f(x) + c_2 g(x) \leq c(f(x) + g(x)) = c(f+g)(x)$ for $c=\max\{c_1,c_2\}$.
+  In particular, $h\in O(f + g)$
+\end{proof}
+
+\begin{table}
+  \begin{tabular}{ll}\toprule
+    order-consistent & $\text{if } f\leq g\text{ then } f\in O(g)$ \\
+    monotone & $\text{if } f\leq g\text{ then } O(f)\subseteq O(g)$ \\
+    reflexive &  $f\in O(f)$ \\
+    transitive &  $\text{if }f\in O(g)\text{ and } g\in O(h)\text{ then } f\in O(h)$ \\
+    scale-invariant & $O(cf) = O(f) \text{ for all $c>0$}$\\
+    homogenuous & $cO(f) = O(f) \text{ for all $c>0$}$\\
+    summation & $O(f) +O(g) = O(f + g)$\\
+    maximum & $O(f + g) = O(\max\{f,  g\})$\\
+    multiplication & $O(f) \cdot O(g) = O(f \cdot  g)$\\\bottomrule
+\end{tabular}
+  \caption{Some useful properties of $O$ defined on functions $f,g\colon \mathbf N\rightarrow \mathbf R_+$.}
+\end{table}
+
+\begin{example}
+  \[6n + 10n\log n \in O(6n) + O(10 n\log n) = O(n) + O(n\log n) = O(n + n\log n) = O(\max\{n, n\log n\})\,.\]
+  Using the rules for reflexivity, scale-invariance, summation and maximum.
+  If we assume $n\geq 2$ then $\log n\geq 1$, so that $n\leq n\log n$. Thus, we can conclude
+  \[6n+10 n\log n\in   O(n\log n)\,\quad (n\geq 2)\,. \]
+  Another way to arrive at the same anwer is 
+  \[6n + 10n\log n \leq 6n\log n +10n\log n = 16n\log n \in O(n\log n)\,, (n\geq 2)\]
+  where we ``switched to big-Oh'' later in the derivation and used more algebra.
+\end{example}
+
+\section{Important functions}
+
+\begin{example}
+  For $n\geq 1$,
+  \begin{enumerate}
+    \item $n\in O(n^2)$ but not vice versa.
+    \item $14\in O(1)$.
+    \item $1\in O(n)$ but not vice versa.
+  \end{enumerate}
+  This follows from basic calculus (for instance, $n\leq n^2$ for $n\geq 1$)
+\end{example}
+
+\begin{example}
+  For $n\geq 2$,
+  \begin{enumerate}
+    \item $\log n\in O(n)$ but not vice versa.
+  \end{enumerate}
+  Basic calculus shows $\log n \leq n$ for $n\geq 2$.
+  Alternatively, use induction over the integers (in particular, $\log (n + 1) \leq \log 2n \leq 1 + \log n\leq 1 + n$).
+\end{example}
+
+\section{Basic programme analysis}
+
+Here is a programme that counts the $0$s in an array $a$ of length $n\geq 1$:
+
+\begin{quotation}
+  \begin{tabbing}
+    xxxx\=xxxx\=xxxx\=\kill
+    $c \leftarrow{} 0$\\
+    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
+    \> \textbf{if\ } $a[i] = 0$\\
+    \>\> $c\leftarrow{} c + 1$\\
+  \end{tabbing}
+\end{quotation}
+
+We want to determine the number of assignments.
+
+The first line use exacly $1$ assignment.
+The iteration is more interesting.
+Depending on the value of $a[i]$, the \textbf{if}-branch costs $0$ or $1$ assignments.
+In the worst case, this is $\max\{0,1\} = 1$, which is the worst-case cost for the body of the loop.
+The \text{for}-expression implictly stands for $n$ assigments $i\leftarrow 1$, $\ldots$, $i \leftarrow n$ and executes the body $n$ times, for a total of $2n$ assignments.
+
+(Arguably, these analyses are so banal that it's hard to see what the notation accomplishes.
+It gets more interesting now.)
+
+Adding the $1$ contributions from the first line we arrive at $2n+1=  O(n)$ for $n\geq 1$.
+We used $O$-notation only at the end, to simplify the expression.
+We could also have written  $2n+1= \Theta(n)$
+
+\bigskip
+
+Let us make th above piece of code slighly more interesting to show off $O$.
+Assume now that $a$ is some data structure containing $n$ elements and that $a.\mathit{popleft}()$ is known to take $O(m)$ time when $a$ contains $m$ elements.
+(Think of $a$ as an array-based list.)
+The $O(m)$ bound may come from a previous analysis, or a textbook, or the library documentation.)
+
+\begin{quotation}
+  \begin{tabbing}
+    xxxx\=xxxx\=xxxx\=\kill
+    $c \leftarrow{} 0$\\
+    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
+    \> \textbf{if\ } $a.\mathit{popleft}() = 0$\\
+    \>\> $c\leftarrow{} c + 1$\\
+  \end{tabbing}
+\end{quotation}
+
+Evaluating the \textbf{if}-statement now costs $O(m)$ for $m\in \{n, n-1,\ldots, 1\}$.
+With foresight, we bound each of them as $O(n)$, using the fact that $ m \leq n$ so that $O( m)\subseteq  O( n)$ by monotonicity of $O$.
+Including the $1$-contribution from the assigment, the whole \textbf{if}-statement costs $1+O(n) = O(1) + O(n)= O(n + 1) = O(\max{n, 1})=  O(n)$.
+The \textbf{for}-loop now costs $n \cdot (1 + O(n))$, which simplifies to $O(n^2)$.
+Adding the contribution from the first line does not change this.
+
+Note that in this example, it was crucial that we could freely manipulate the $O(m)$-expression.
+
+\section{Syntactic rules}
+
+\newcommand{\cost}{\operatorname{cost}}
+
+It is possible to formalise the syntactic approach by writing down general rules for determining the cost  $\cost_n(P)$ of programme $P$ and parameter $n$.
+
+\begin{description}
+  \item[Assignment:] If $\cost_n(x\leftarrow a)$. All other atomic statements cost $0$.
+  \item[Sequence:] If $P = Q; R$ with $\cost_n(Q) =f$, $\cost_n(R)= g$ then $\cost_n(P)= f + g$.
+  \item[Selection:] If $P = \mathbf{if\ } b \mathbf{\ then\ } Q \mathbf{\ else\ } R$ with $\cost_n(Q) =f$, $\cost_n(R)= g$ and $\cost_n(b)= h$ then $\cost_n(P) = b + \max (f, g)$.
+  \item[Iteration:] If $P = \mathbf{for\ }i\in I \mathbf{\ do\ }  Q$ then $\cost_n(P) = |I|(1 + \cost_n(Q))$.
+\end{description}
+
+However, there is no strong tradition for this degree of formalism in the analysis of algorithms, so we will not pursue it further.
+
+
+\chapter{Tilde Explained}
+
+\emph{Warning: the rest of this section is a draft and may contain errors.}
+
+Tilde notation is defined in terms of limits, so we consider limits first.
+
+\section{Limits}
+
+Let $f$ be a function from $\mathbf R$ to $\mathbf R$.
+Then the \emph{limit at infinity} of $f$ (or just \emph{limit} in these notes), written
+\[ \lim_{x\rightarrow \infty} f(x)\]
+is one of four things: a real number, $\infty$, $-\infty$, or undefined.
+All our limits are at infinity, so we will drop the ``$x\rightarrow \infty$.''
+Inuitively, the limit is ``what $f(x)$ approaches arbitrarily closely as $x$ grows.'' 
+For instance,
+\[ \lim \frac1x= 0, \qquad \lim\left( 1-\frac1x\right) = 1\,.\]
+Pathologically, $\lim 7 =7$.
+Not all functions have limits, for instance $\lim \sin x$ is meaningless and undefined.
+(The function oscillates between $-1$ and $1$, never approaching a value.)
+
+For all function we will encounter, the limit is easily determined.
+
+The \emph{formal} definition is as follows.
+For real number $c$ we say that $\lim f(x) =c$ if for every $\delta > 0$, there is a real number $b$ such that
+\[ |f(x) - c|\leq \delta \qquad\text{for $x>b$}\,. \]
+We say that $\lim f(x)= \infty$ if for every $B$ where is a real number $b$ such that \[f(x) > B\qquad\text{for $x>b$}\,.\]
+
+\begin{theorem}[Laws for limits at infinity]
+  Assume that $\lim f(x)$ and $\lim g(x)$ exist.
+  \begin{description}
+    \item[Constant:] $\lim c = c$ for any real $c$.
+    \item[Constant factor:] $\lim a f(x) = a\lim f(x)$ for any real $a\neq 0$.
+    \item[Additive:] $\lim (f(x) + g(x)) = \lim f(x) + \lim g(x)$.
+    \item[Multiplicative:] $\lim (f(x) \cdot g(x)) = \lim f(x) \cdot \lim g(x)$.
+    \item[Domination] If $f(x) \leq g(x)$  for $x> b$ then $\lim f(x) \leq \lim g(x)$.
+  \end{description}
+\end{theorem}
+
+These laws sometimes give nonsensical results such as $\infty/\infty$ or $5/0$, in which case you can deduce nothing from them.
+
+
+\begin{proof}[Some proofs]
+  For the second claim, let $c= \lim f(x)$ and let $\delta >0$ be given.
+
+  Choose $b$ such that $|f(x) - c|\leq \delta/|a|$ for $x\geq b$.
+  Then we have 
+  \[ |af(x) - ac|= |a(f(x) - c)| = |a|\cdot |f(x)-c| \leq |a|\frac{\delta}{|a|} = \delta\,.\]
+
+  \medskip 
+  To establish additivity, let $\lim f_1(x) = c_1$ and $\lim f_2(x) = c_2$.
+  We want to prove $\lim f_1(x) + f_2(x) = c_1 + c_2$.
+  Let $\delta > 0$ be given and choose $b_1$ and $b_2$ such that 
+  \[ |f_i(x) - c_i| \leq \textstyle\frac12\delta \qquad\text{for $x\geq b_i$}\,.\]
+  But then, for $x \geq \max{b_1 + b_2}$, we have
+  \begin{multline*}
+    |(f_1(x)+f_2(x)) - (c_1 + c_2)| = |f(x)-c_1 + f_2(x) -c_2|\leq \\
+  |f(x)-c_1| + |f_2(x)-c_2| \leq \textstyle\frac12\delta + \frac12\delta = \delta\,,
+  \end{multline*}
+  using the triangle inequality (which states that $|x + y|\leq |x| + |y|$.)
+  The proof for multiplicativity is similar, but algebraically more involved.
+  The exponentiation proof for integral $n$ is induction.
+\end{proof}
+
+The calculation of limits is sometimes very easy (such as $\lim x$ or $\lim 7$ or $\lim 1/x$).
+We also have
+\begin{multline*}
+  \lim (a_kn^k+\cdots +a_1n+ a_0 )= \\
+  \lim a_kn^k\cdot \bigl(
+  1 + \frac{a_{k-1}}{a_k n}  +\cdots +\frac{a_1}{a_k n^{k-1}}+ \frac{a_0}{a_k n^k} \bigr)\,,
+\end{multline*}
+ and observing that each of the terms in the parenthesis involving $n$ vanishes as $n$ tends to infinity, the entire expression equals $\lim a_kn^k$.
+
+Sometimes, these claim use nontrivial calculus, even for the relatively harmless functions that appear in the analysis of algorithms.
+For instance, depending on you mathematical maturity, arrogance, or sloppiness, the claim \[ \lim \frac{\ln n}{n} = 0,,\]
+is either ``clear,'' requires you to enter the expression into a graphing calculator, write a computer program to calculate the value for large $n$, or come up with the following:
+
+\begin{theorem}\label{prop: log vs linear limit}
+  \[\lim\frac{\ln n}{n} = 0,.\]
+\end{theorem}
+\begin{proof}
+  Using calculus, we have
+  \[
+    \ln n =
+    \int_1^n \frac1y\, dy \leq
+    \int_1^n \frac{1}{\sqrt y}\, dy =
+    \left [ 2\sqrt y \right]_1^n< 
+    2\sqrt{n} \,.
+  \]
+  Thus, 
+  \[ \frac{\ln n}{n} \leq \frac{2\sqrt{n}}{n} = \frac{2}{\sqrt n}\,,\]
+  which tends to $0$ as $n$ grows.
+
+  (There are many other ways to prove this.)
+\end{proof}
+
+\paragraph{Discussion} Aren't we done? Can't we define the running time of an algorithm as $\lim T(x)$?
+For instance, because of the polynomial property, the complicated running time of three nested for-loops, $\binom{n}{3}=\frac16n^3 - \frac12n^2+ \frac13n$, would be given as its limit,
+\[\textstyle\lim \frac16n^3 - \frac12n^2+ \frac13n = \lim\frac16n^3\,.\]
+Alas, this is not good enough, because $\lim\frac16n^3= \infty$.
+In fact, all nonconstant running times ($\log n$, $n$, $\frac16n^3$, $2^n$, $\ldots$) have the \emph{same} limit (namely, infinity).
+There would be only two different running times: constant and infinite.
+
+\section{Tilde}
+
+\begin{definition}[Tilde]
+For functions, \(f, g\colon \mathbf R \rightarrow \mathbf R\) we say that \(f\) is \emph{asymptotically equal} to \(g\), in symbols \[f(x)\sim g(x)\]
+if 
+\[ \lim_{x \rightarrow \infty} \frac{f(x)}{g(x)}  = 1\,.\]
+\end{definition}[Tilde]
+
+
+\begin{example}
+The above makes no sense whenever \(g(x)\) is zero infinitely often as \(x\) tends to infinity.
+An example of such a function is \(\sin (x)\); it vanishes whenever \(x\) is a multiple of \(\pi\).
+Luckily for us, such functions do not appear in the analysis of algorithms (running times are not 0), and we could proceed by just ignoring this issue.
+Formalists will want to read every occurrence of “function” as a “function that is eventually nonzero,” i.e., “function  \(f\) for which there exists a value \(x_0\) such that \(f(x) \neq 0\) for \(x\geq x_0\).”
+Such formalists will want to convince themselves that all functions appearing the analysis of algorithms (polynomials, logarithms, exponentials and their compositions) satisfy this requirement, except for cases such as \(n- n\).
+Developing this carefully is neither hard nor illuminating, so we will overlook it.
+\end{example}
+
+\begin{theorem}
+  \(\sim\) is an equivalence relation on the set of real functions.
+  That is,
+  \begin{enumerate}
+    \item \(f(x)\sim g(x)\) iff \(g(x)\sim f(x)\)  (symmetry), 
+    \item\(f(x)\sim f(x)\) (reflexivity),
+    \item if \(f(x)\sim g(x)\) and  \(g(x)\sim h(x)\) then 
+  \(f(x)\sim h(x)\) (transitivity).
+  \end{enumerate}
+\end{theorem}
+
+\begin{proof}
+  Directly from the definition and rules for limit.
+  For instance, 
+  \begin{multline*}
+    \lim_{x\rightarrow \infty} \frac{f(x)}{h(x)} = 
+    \lim_{x\rightarrow \infty} \frac{f(x)}{h(x)}\frac{g(x)}{g(x)} =
+    \lim_{x\rightarrow \infty} \frac{f(x)}{g(x)}\frac{g(x)}{h(x)} =  \\
+    \biggl(\lim_{x\rightarrow \infty} \frac{f(x)}{g(x)}\biggr)\cdot \biggl(\lim_{x\rightarrow \infty} \frac{g(x)}{h(x)} \biggr) =  
+    1\cdot 1 
+    = 1\,.
+  \end{multline*}
+  establishes transitivity except if you worry about $g(x) = 0$.
+\end{proof}
+
+\begin{theorem}[multiplication, division]
+  If \(f_1(x)\sim g_1(x)\) and \(f_2(x)\sim g_2(x)\)  then 
+  \begin{enumerate}
+    \item
+  \((f_1\cdot f_2)(x)  \sim (g_1\cdot g_2)(x)	\).
+    \item
+  \((f_1/ f_2)(x)  \sim (g_1 / g_2)(x)	\).
+  \end{enumerate}
+\end{theorem}
+\begin{proof}
+  Directly from the rules for limits. 
+\end{proof}
+
+\begin{theorem}[logarithm]
+  If $\lim g(x)=\infty$ and  \(f\sim g\) then \(\log f \sim \log g\).
+\end{theorem}
+\begin{proof}
+  Follows from Propositions~\ref{prop: tilde implies Oh} and \ref{prop: log big Oh} below.
+\end{proof}
+
+This does not work in the other direction: \(f\sim g\) does \emph{not} imply \(2^ f \sim 2^ g\).
+It is not true in general that $f\sim g$ implies $\log f\sim \log g$.
+
+
+Despite these handy tools, we often have to go back directly to the definition.
+To establish 
+\[n + \ln n \sim n\,,\]
+we need the calculation
+\[ \lim \frac{n+ \ln n}{n} = \lim\frac{n}{n} + \lim\frac{\ln n}{n} = 1 + 0= 1\,,\]
+using the laborious argument from Proposition~\ref{prop: log vs linear limit}.
+
+\chapter{Big Oh Explained}
+
+\section{Big Oh Defined}
+\begin{definition}
+Let $f$ and $g$ be real-valued functions defined on the same set of nonnegative real numbers.
+Then $f(x)= O(g(x))$ if there exists a positive real number $B$ and a nonnegative real number $b$ such
+that
+\[ |f(x)| \leq B |g(x)| \qquad\text{for all $x > b$}\,.\]
+\end{definition}
+
+
+Many very similar definitions exist, they all define the same notion.\footnote{
+  Apart from notational substitions, such as $C$ for $B$ and $n_0$ for $b$, the seemingly bigger differences are:
+  (i) requiring $x\geq b$ instead of $x> b$.
+  This makes no difference: just make $b$ slightly larger/smaller.
+  (ii) defining the domain of $f$ and $g$ as the natural numbers (rather than the nonnegative reals).
+  For our functions (polynomials, logarithms, etc.), this makes no difference.
+  (iii) more interestingly, dropping the norms, so that the requirement is $f(x)\leq B\cdot g(x)$.
+  The functions we are interested in (running times of algorithms) are nonnegative, so $|f(x)|= f(x)$ anyway and therefore this detail in the definition again makes no difference.
+  However, some internal calculations become easier when the norms are kept.
+}
+
+
+\begin{theorem}
+  Assume $f_1(x) = O(g_1(x))$, and let $C$ be any constant.
+  Then $Cf_1(x) = O(g_1(x))$ and $C+f_1(x) = O(g_1(x))$.
+
+  Moreover, 
+  assume $f_2(x) = O(g_2(x))$.
+  Then, 
+  \begin{enumerate}
+    \item $(f_1 + f_2)(x)  = O((f_1+f_2)(x))$,
+    \item $(f_1 \cdot f_2)(x)  = O((f_1\cdot f_2)(x))$.
+    \end{enumerate}
+  We assume that $g_1$ and $g_2$ are positive.
+\end{theorem}
+
+\begin{proof}
+    We prove the claim for addition of two functions.
+    Pick $B_1,B_2, b_1, b_2$ such that \[
+      |f_i(x)| \leq B_i\cdot |g_i(x)| \qquad\text{for all $x>b_i, i \in\{1,2\}$}\,.
+    \]
+    Set $B=\max\{B_1, B_2\}$ and $b=\max\{b_1, b_2\}$.
+    Then for $x>b$, 
+    \begin{multline*}
+      |(f_1+f_2)(x)| =
+      |f_1(x)+f_2(x)| \leq
+      |f_1(x)| + |f_2(x)| \leq\\
+      B_1|g_1(x)| + B_2|g_2(x)| \leq
+      B|g_1(x)| + B|g_2(x)| =\\
+      B(|g_1(x)| + |g_2(x)|) =
+      B(g_1(x) + g_2(x)) =
+      B(g_1 + g_2)(x)\,.
+    \end{multline*}
+  \end{proof}
+
+
+
+\begin{theorem}[Logarithm]
+  \label{prop: log big Oh}
+  Assume that $f(x)=O(g(x))$ and $\lim g(x)=\infty$.
+  Then $\log f(x) \sim \log g(x)$.
+  In particular, $\log f(x)= O(\log g(x))$.
+\end{theorem} 
+
+\begin{proof}
+  Choose $B$ and $b$ such that $|f(x)| \leq |g(x)|$ for $x> b$.
+  Then \begin{multline*}
+    \lim \frac{\log f(x)}{\log g(x)} = \lim \frac{\log |f(x)|}{\log |g(x)|} \leq \lim \frac{\log( B\cdot |g(x)|)}{\log |g(x)|}
+    = \\
+    \lim \frac{(\log B) + \log |g(x)|}{\log |g(x)|}=
+    1 + \lim {B}{|g(x)|} = 1\,.
+  \end{multline*}
+\end{proof}
+
+\medskip
+Recall that we want to be able to make `intuitively obvious' claims like \(\frac{1}{2}n = O(n) \) and  \(n^2=O(n^3)\), but none of the rules so far make that easy.
+The reason we call this `intuitively obvious' is that we all know that the cube grows faster than the square  – for instance,  \(10^2< 10^3\) – but note that for instance \((-2)^2 > (-2)^3\) and even \((\frac{1}{2})^2 > (\frac{1}{2})^3\), so the claim holds only for large enough \(n\); in this case, for \(n\geq 1\).
+Also note that \(-n^2 \leq - n\) for positive \(n\) but  \( -n^2\) is not \(O(-n) \), so cleary we have to be careful.
+
+Here is the tool we're after:
+
+\begin{theorem}[Domination]\label{prop: D}
+  Assume
+  \begin{enumerate}
+    \item\(f\) is eventually\footnote{
+	Speakers of Germanic languages (such as Danish) beware: 
+	``eventually'' does not mean ``\emph{eventuell}'' (as in possibly).
+	It means sooner or later, but certainly.
+      }at most \(g\), i.e.,  if there exists \(b\) such that  \(f(x) \leq g(x)\) for \(x\geq b\),
+    \item \(g\) is eventually positive, i.e., there exists \(b'\) such that \(g(x) \geq 0\)  for \(x\geq b'\). 
+  \end{enumerate}
+  Then \(f= O(g)\).
+\end{theorem}
+
+\begin{proof} 
+  For \( x\geq \max(b, b') \), we have 
+  \( |f(x)| = f(x) \leq g(x) \leq |g(x)| \). 
+\end{proof} 
+ 
+Let's apply this to some functions that frequently appear in the analysis of algorithms:
+
+\begin{theorem}[ln versus linear]
+\(\ln n  = O(n)\).
+\end{theorem}
+
+\begin{proof}
+  We will use Propostion~\ref{prop: D}.
+  The logarithm is positive for \(n> 0\).
+  We want to show \(\ln n \leq n\) for large enough \(n\), say \(n\geq 1\).
+  But that is just calculus. 
+  First, for \(n=  1\) we have \(\ln n \leq n\).
+  Moreover, the function \(n \mapsto n-\ln n\) is nondecreasing for \(n\geq 1\) since its derivative \(1 - \frac{1}{n}> 0\) is nonnegative.
+\end{proof}
+
+
+\begin{theorem}[power functions]
+  Let \(a \leq b\). Then \(n^a = O(n^b)\).
+\end{theorem}
+
+\begin{proof}
+  It suffices to show that for  \(n \geq 0\) we have \(n^a \leq n^b\); then we can use Proposition~\ref{prop: D}.
+  We need to show that the difference \(n^b - n^a\) is nonnegative. 
+  Again, we use elementary calculus.
+  The difference is zero for  \(n= 1\), and it is nondecreasing since its derivative \(b- a\geq 0\) is nonnegative. 
+\end{proof}
+
+The above results give us an alternative proof for $a_kx^k +\cdots + a_1x + a_0 =O(x^k)$.
+(For $r\leq k$, bound the $r$th term as $a_rx^r = O(x^k)$, then apply additivity $k$ times.)
+
+
+\bigskip
+
+\subsection{Big Oh as a limit}
+
+\begin{theorem}
+  Let $f,g\colon\mathbf R\rightarrow\mathbf R$ with $g$ nonnegative and such that $\lim f$ exists.
+  Then \[ f=O(g) \]
+ if and only if
+  \[ \lim \frac{|f(x)|}{g(x)} < \infty \,.\]
+\end{theorem}
+
+\begin{proof}
+  Assume $f(x)=O(g(x))$ and thus pick $b$ such that $|f(x)|\leq |g(x)| = g(x)$ for all $x>b$.
+  In particular \[\frac{|f(x)|}{g(x)} \leq 1\,,\]
+  so \[\lim \frac{|f(x)|}{g(x)} \leq 1< \infty\,.\]
+  
+  For the other direction, first assume
+  \( \lim |f(x)|/ g(x) = B \)
+  for some real number $B$.
+  This means that there exist an integer $b$ such that for $x>b$,
+  \[  \left|\frac{|f(x)|}{g(x)} - B\, \right| \leq 1.\]
+  In particular,
+  \[ \frac{|f(x)|}{g(x)} - B \leq 1\,,\]
+  which can be rearranged to 
+  \[ |f(x)| \leq (1+ B)g(x) = (1+B)|g(x)|\,.\]
+  For the final case, i.e.,
+  \( \lim |f(x)|/ g(x) = -\infty\,, \)
+  we can repeat the above argument with $B=0$.
+\end{proof}
+
+We can view this an alternative definition of $O$, closer in spirit to the defintion of $\sim$, in that it expresses the relationship between $f$ and $g$ in terms of the limit of $f/g$.\footnote{
+  A veritable curnucopia of related concepts exists and is used 
+  For instance, when $\lim f/g =0$ we write $f=o(g)$.
+  When $\lim g/f < \infty$ we write $f=\Omega(g)$.
+  When $\lim f/g = B$ for some real number we write $f=\Theta(g)$.
+}
+
+After all this work, we can finally establish the relationship between $\sim$ and $O$:
+
+\begin{theorem}\label{prop: tilde implies Oh}
+  Let $f,g\colon\mathbf R\rightarrow\mathbf R$ with $g$ nonnegative and such that $\lim f$ exists.
+  If $f\sim g$ then  \( f=O(g)\,. \)
+\end{theorem}
+
+We repeat that the other direction is not even close to being true: $2x =O(x)$ but $2x\not\sim x$.
+
+\medskip
+We are also finally able to say something like \(\log n = O(\sqrt{n})\).
+Such expressions appear frequently in the analysis of algorithms, for instance when comparing shellsort \(O(n^{3/2})\) to mergesort \(O(n\log n)\), or \(\sqrt{n}\)-trees to balanced binary search trees.
+
+
+\begin{theorem}[ln versus power]
+For all exponents \(a>0\), \[ \ln x = O(x^a)\,.\]
+\end{theorem}
+
+Unfortunately, I know no short and easy proof for these relationships.
+
+\begin{proof}[Proof using integrals]
+We have
+\[
+\frac{1}{y} \leq y \qquad(\text{for any } y \geq 1)\,.
+\]
+Thus, for any \(z\geq 1\),
+\[
+\int_1^z \frac{1}{y} \,dy\leq  \int_1^z y\, dy \,,
+\]
+so that \[ \ln z \leq \tfrac{1}{2} z^2\,.\]
+In particular, if we choose \(z = x^{a/2}\),
+then we have \( \ln x^{a/2} \leq \frac{1}{2} (x^{a/2})^2\), which simplifies to
+\[  \ln x \leq    x^a\qquad(x\geq 1)\,. \]
+  Now we can apply Proposition~\ref{prop: D} to conclude \(\ln n = O(x^a)\).
+\end{proof}
+
+\begin{proof}[Proof using l’Hôpital’s rule]
+We have
+\[ 
+\lim_{x\rightarrow \infty} \frac{\ln x}{ x^a} = 
+ \lim_{x\rightarrow \infty} \frac{1/x}{a x^{a-1}} = 
+ \lim_{x\rightarrow \infty} \frac{1}{a x^a} = 0 \,.
+\]
+In particular, the limit is bounded away from infinity.
+  Conclusion by Proposition (not yet established).
+\end{proof}
+
+\begin{theorem}[polylog versus power]
+  For all  bases \(r> 1\) and exponents \(a>0\) and \(k> 0\), \[ (\log_r x)^k = O(x^a)\,.\]
+\end{theorem}
+
+\begin{proof}
+  TODO. (Need power law.)
+\end{proof}
+
+\section{Hints and pitfalls}
+
+When I read summaries like the above, my brain can't stop subvocalising ``How very useful! Whatever makes the notation look neat is also be true; and somebody else has proved it for us. Why bother.''
+
+So here are some warnings.
+
+\begin{description}
+  \item[Misapplied notation.] 
+    Avoid writing ``the number of comparisons is $\sim 3x^2  - 5x +7$.''
+    While not \emph{false}, this signals lack of mastery of the notation, you should write
+    ``the number of comparisons is $\sim 3x^2$.''
+    (The whole point of the notation is to allow you to avoid the smaller terms.)
+    Similarly, don't write $O(n^2 + n)$, or $O(7n^2)$; do write $O(n^2)$, even though these expressions all mean the same. 
+    (As does $O(100034245n^2 + n\log n +\sqrt n)$.)
+    You're not doing yourself any favour (nor your reader) by not cleaning that up.
+  \item[Everything is a constant.]
+    Check this out: ``$1+2+3+\cdot + n$ is just a sum of constants.
+    Each can be bounded by $O(1)$, so we can rewrite the sum to $O(1)+ O(1) +\cdot +O(1)=O(n)$.''
+    The argument is false, and the conclusion is false as well.
+    One thing wrong with the argument is that the terms are not constant, they depend on $n$.
+    Indeed, half of them are larger than $\frac n/2$, which is certainly not $O(1)$.
+    The other mistake is using $O$-expressions to the left of an equality sign:
+  \item[Reading big-Oh backwards.]
+    It is true that $2n =O(n)$ and $17n+4 =O(n)$.
+    But this ``$=$'' does not behave as the one you're used to.
+    So you cannot infer $2n=17n+4$, that's still false.
+    In general, aim at having only a single $O$-in your calculations, and always at the end.
+    Never write $O(n)= 3n$, it means nothing.
+  \item[Exponents don't like asymptotics.]
+    The argument ``$6^x = O(2^x)$ because $6$ is only a constant times $2$'' sounds tempting but the claim is simply \emph{false}.
+    (In particular $6^x \neq 3\cdot 2^x$.)
+  \item[Broken logarithm rule.]
+    This may be nit-picking, but:
+    Define $f,g\colon \mathbf R\rightarrow \mathbf R$ as $f(n)=1+\frac1n$ and $g(n)=1+\exp(-n)$ and 
+    note that \[ 
+    \lim f(n) = \lim g(n)= \lim \frac{f(n)}{g(n)} = 1\,\]
+    so that both $f(n)\sim g(n)$ and $f(n)=O(g(n))$.
+    However, using calculus one can verify
+    \[ 
+    \lim \frac{\log (1+\frac1n)}{\log(1+\exp(-n))} =
+    \lim \frac{\log (\frac1n)}{\log\exp(-n)} =
+    \lim \frac{\exp(n)}{n}=\infty\,
+    \]
+    so $\log f(x)$ is not $O(\log g(n))$.
+    Compare this to Propositions~\ref{prop: log tilde} and \ref{prop: log O}.
+    (It was important that $g(x)\rightarrow \infty$.)
+\end{description}
+
+\section{Multivariate asymptotics}
+
+To be written.
+
+The motivation is that we freely use expressions like $O(n+m)$ in the analysis of, say, graph algorihtms, but the concept of a \emph{bivariate} asymptotic notation is never defined.
+(There are a bunch of ways of doing this.
+Just do it.)
+
+
+
+\end{document}

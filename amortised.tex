@@ -554,6 +554,21 @@ How little do you actually need?
  What if wheel $k$ costs $10^k$? $11^k$?
 \end{ExerciseList}
 
+\section{On the word `average' in [SW]}
+
+We already discussed the use of the word `average' and its various meanings.
+The concept described in these notes is a specific kind of average called `amortised,' and we have tried to be disciplined in our use of it.
+This does not mean that the mental model of `amortisation is just some kind of average' is false.
+In particular, the textbook [SW] itself uses the word in its own formulation of proposition A4.
+
+However, as a possible source of confusion the word `average' is used in Proposition K in [SW, Sec. 2.3] with a different meaning:
+\begin{quote}
+  {\bf Proposition K}. Quicksort uses $\sim 2N\ln N$ compares (and one-sixth that many exchanges) on the average to sort an array of length $N$ with distinct keys.
+\end{quote}
+This statement describes the running time of a single run of an algorithm on a random input (namely, a sequence of uniformly and independently distributed integers).
+This is precisely \emph{not} how `average' is used in proposition A4:
+There, the sequence (which defines repeated operations on a data structure) is nonrandom (it is, in fact, a worst case sequence.)
+
 
 \chapter{Union--Find Variants}
 
@@ -902,11 +917,11 @@ For unlike for weighted quick-union, we cannot establish a logarithmic time boun
 
   \medskip
   \emph{Light:}
-  Consider a particular \emph{find} operation and let $v_1$, $\ldots$, $v_r$ be the path of vertices traversed by the operation, numbered from top to bottom.
-  Let $e$ from $u$ to $v$ be a light edges on this path.
-  Because $e$ is light, the corresponding subtrees double in size: $|T_v|> 2|T_u|$.
-  Thus, if the path contains $l$ light edges, we have \[|T_{v_r}| > 2^l |T_{v_0}|\,.\]
-  Since $|T_{v_r}|\leq n$ and $|T_{v_0}| \geq 1$, we have $l\leq\log_2 n$.
+  Consider a particular \emph{find} operation and let $v_1$, $\ldots$, $v_r$ be the path of vertices traversed by the operation, numbered from bottom to top.
+  Let $e$ from $u$ to $v$ be a light edge on this path.
+  Because $e$ is light, the corresponding subtrees double in size: $|T_v| > 2|T_u|$.
+  Thus, if the path contains $l$ light edges, we have \[|T_{v_r}| > 2^l |T_{v_1}|\,.\]
+  Since $|T_{v_r}|\leq n$ and $|T_{v_1}| \geq 1$, we have $l\leq\log_2 n$.
   Thus, the path contains at most $\log_2 n$ light edges, and therefore the \emph{find} operation cannot destroy more than that many.
   Since there are at most $3k$ \emph{find} operations, we conclude that the total number of light edges destroyed is $O(k\log n)$.
  
@@ -939,21 +954,169 @@ For unlike for weighted quick-union, we cannot establish a logarithmic time boun
   However, it is true that no vertex ever receices a new \emph{descendant} after it loses its self-loop, so the main argument remains true and the proof can be fixed.
 \end{ExerciseList}
 
-\section{On the word `average' in [SW]}
 
-We already discussed the use of the word `average' and its various meanings.
-The concept described in these notes is a specific kind of average called `amortised,' and we have tried to be disciplined in our use of it.
-This does not mean that the mental model of `amortisation is just some kind of average' is false.
-In particular, the textbook [SW] itself uses the word in its own formulation of proposition A4.
+\section{Weighted Quick--Union with Path Compression}
 
-However, as a possible source of confusion the word `average' is used in Proposition K in [SW, Sec. 2.3] with a different meaning:
-\begin{quote}
-  {\bf Proposition K}. Quicksort uses $\sim 2N\ln N$ compares (and one-sixth that many exchanges) on the average to sort an array of length $N$ with distinct keys.
-\end{quote}
-This statement describes the running time of a single run of an algorithm on a random input (namely, a sequence of uniformly and independently distributed integers).
-This is precisely \emph{not} how `average' is used in proposition A4:
-There, the sequence (which defines repeated operations on a data structure) is nonrandom (it is, in fact, a worst case sequence.)
+As before, consider a sequence of $k$ many interleaved union- and find-operations on a data structure for universe size $n$.
+As before, note that the number of nodes ever accessed by the $k$ operations is $O(\min\{2k, n\})$.
+As before, let $T_u$ denote the subtree rooted at $u$.
 
+
+\subsection{Rank}
+
+Let $R_u$ be the largest subtree of $u$ at any time during the evolution of the data structure.
+
+(To gain some inuition, it can be seen that while $u$ is a root its subree only ever grows, namely when other trees are linked below $u$ after a \emph{union}, and after $u$ ceases to be a root its subtree only ever shrinks, namely when its descendants are moved to new parents by a path compression.
+Thus, $R_u$ is the subtree $T_u$ immediately before the union-operation that makes $u$ a non-root.)
+
+Define the \emph{rank} of $u$ to be \[ r_u= \left\lfloor \log_2 |R_u|\right\rfloor\,\]
+and note 
+\[ r_u\in\{0,\ldots, \lfloor\log_2 n\rfloor \}\,.\]
+
+\begin{lemma}[Invariant: ranks strictly increase along edges]%
+  \label{lem:ranksincrease}
+  Assume $uv$ for $u\neq v$ is an edge at any time during the data structure.
+  Then $r_u<r_v$.
+\end{lemma}
+
+\begin{proof}
+  Consider the edges $uv$ in the order they are created during the $k$ operations.
+
+  The first edge $uv$ is the result of the first union operation \emph{union}$(u,v)$.
+  Node $u$ ceases to be a root, so $r_u = \lceil \log_2 1\rceil =0$, and $|R_v|\geq |T_v| =2$, so $r_v\geq 1$.
+  More generally, let $uv$ be a new edge.
+  If $uv$ is the result of a union then $u$ and $v$ are both roots.
+  Let $T_u$ and $T_v$ be the trees rooted at $u$ immediately before the operation,
+  note that they are disjoint because $u$ and $v$ are both roots.
+  By the weighting strategy, $|T_u|\leq |T_v|$.
+  Node $u$ just ceased to be a root, so $R_u= T_u$ and its rank is $r_u =\lfloor \log_2 |T_u| \rfloor$.
+  After the operation, $v$ is still a root and is now the ancestor of all the elements in $T_u$ and $T_v$.
+  It may gain even more descendants later, but certainly $|R_v|\geq |T_u| + |T_v| \geq 2|T_u|$.
+  In particular
+  \[ 
+    r _v = 
+    \lfloor\log R_v\rfloor  =
+    \lfloor\log_2 2|T_u|\rfloor =
+    \lfloor 1 + \log_2 |T_u|\rfloor = 
+    1 + \lfloor\log_2 |T_u|\rfloor =
+    1 + \lfloor\log_2|R_u|\rfloor = 1 + r_u\,,
+    \]
+  so $u$ has strictly higher rank than $v$.
+
+  If $uv$ is the result of a path compression then there is a path from $u$ along already existing edges to a root $v'$.
+  The root $v'$ has higher rank than $u$ by induction, and we can replace $v$ by $v'$ in the above argument.
+\end{proof}
+
+\begin{lemma}[parent rank strictly increases over time]%
+  \label{lem:parentrank}
+  Assume the edge $uv$ with $u\neq v$ is replaced by the edge $uw$. 
+  Then $r_u<r_w$.
+\end{lemma}
+\begin{proof}
+  When $u$ is not a root then it gains a new parent $w$ only by path compression.
+  The compressed path necessarily includes the edge $uv$ and ends at $w$.
+  In particular, $w$ is an ancestor of $v$, so $r_w>r_v$ by the previous lemma.
+\end{proof}
+
+\begin{lemma}
+  If $u$ and $v$ with $u\neq u$ have the same rank then $R_u$ and $R_v$ are disjoint.
+\end{lemma}
+\begin{proof}
+  Consider $w$ belonging to both $R_u$ and $R_v$.
+  One of $u$ and $v$, say $u$, becomes a non-root first.
+  (If both $u$ and $v$ are roots at the end, then $R_u$ and $R_v$ are obviously disjoint no matter their ranks.)
+  When $v$ becomes an ancestor of $w$, it is also an ancestor of $u$.
+  Thus $r_v>r_u$ by Lemma~\ref{lem:ranksincrease}, so that $u$ and $v$ do not have the same rank.
+\end{proof}
+
+Let $n_r$ be the number of nodes of rank $r$ ever accessed by the operations.
+
+\begin{lemma}\label{lem:n_r}
+  \[ n_r \leq \frac{k}{2^r}\,.\]
+\end{lemma}
+\begin{proof}
+  For every node $u$ of rank $r$, the tree $R_u$ has size  \[|R_u|= 2^{\log_2|R_u|} \geq 2^{\lfloor \log_2|R_u|\rfloor} = 2^r\,,\] and they are all disjoint according to the above lemma.
+\end{proof}
+
+\subsection{Tower function}
+
+\begin{definition}[Tower function]
+  Define the tower function $t$ for each nonnegative integer by 
+  \[t(i) = \begin{cases}
+    1\,,& i =0\,;\\
+    2^{t(i-1)}\,,& i >0\,.\\
+  \end{cases}
+  \]
+\end{definition}
+
+Here are the first few values of $t(0), t(1),\ldots$:
+
+\begin{tabular}{ccccccccc}
+  $i$ & 0 & 1 & 2 & 3 & 4 & 5& 6 & $\cdots$ \\
+  $t(i)$ & 1 & 2 & 4 & 16 & 65536 & $2^{65536}$ & $2^{2^{65536}}$ & $\cdots$
+\end{tabular}
+
+The tower sequence grows quickly---the decimal representation of $t_5$ has $19,729$ digits yet can still be written down on half a page of paper; whereas $t_6$ has more digits than there are protons in the known universe.
+
+The inverse of the tower sequence is the iterated logarithm.
+\begin{definition}[Iterated logarithm]
+  For $n\geq 0$ define
+  $\log^* n =  \min\{\, i \colon t(i) \geq n\}$.
+\end{definition}
+
+For instance, $\log^* 3= 2$, $\log^* 4 = 3$, and $\log^* 100,000 = 4$.
+In particular, if $n<10^{100}$ is the number of atoms in the universe (a reasonable upper bound on a realistic input size) then $\log^* n =5$.
+However, formally $\log^* n$ is \emph{not} bounded by a constant, and we have $\log^* n \notin O(1)$.
+
+\subsection{Rank group}
+
+The nodes in the data structures are partitioned into groups according to their rank:
+\begin{definition}[Rank group]
+  For $i\in \{0,\ldots, \log^*n\}$, the node $u$ belongs to rank group $G_i$ if $t(i-1) < r_u \leq t(i)$.
+\end{definition}
+
+The core structural insight is that the rank groups decrease in size dramatically.
+
+\begin{lemma}
+  \[|G_i| \leq \frac{k}{2^{t(i)}}\,.\]
+\end{lemma}
+\begin{proof}
+  For $a<b$ the number of nodes of rank $r$ with $a< r\leq b$ is, by Lemma~\ref{lem:n_r},
+  \[ n_{a+1} +\cdots + n_b \leq \frac{k}{2^{a+1}} + \cdots + \frac{k}{2^b} =
+  k\left(\frac{1}{2^{a+1}} + \cdots + \frac{1}{2^b}\right) \leq
+  k\cdot \frac{1}{2^a}\,.
+  \]
+  In particular, the number of nodes in rank group $i$ is at most $2^{t(i-1)} = t(i)$.
+\end{proof}
+
+\subsection{Analysis}
+
+It suffices to count the edges along paths traversed by \emph{find} operations.
+Consider an edge $uv$ along such a path.
+By Lemma~\ref{lem:ranksincrease}, the ranks along the path strictly increase.
+At most $\log^* n$ edges can cross a rank group (there are at most that many rank groups.)
+Summing over all $k$ many \emph{find} operations, there are at most $k\log^* n$ such edges in total.
+
+It remains to count, for vertex $u$, the number of edges $uv$ ever traversed by a find operation such that $v$ belongs to the same rank group as $u$.
+Except for the last edge along a compressed path, each of these edges gets destroyed by this traversal.
+
+\begin{lemma}
+  Let $u$ be a node in rank group $G_i$.
+  The number of destroyed edges $uv$ with $v\neq u$ and $v\in G_i$ is at most $t(i)$.
+\end{lemma}
+\begin{proof}
+  Let $v_1,\ldots, v_s$ be the nodes such that $uv_j$ is ever an edge, and let $r_1, \ldots, r_s$ be their ranks.
+  Whenever $u$s parent changes from root $v_j$ to new root $v_{j+1}$, their rank increases by Lemma~\ref{lem:parentrank}.
+  Thus, the ranks are all different yet belong to $G_i$, so there can be at most $t(i)-t(i-1)\leq t(i)$ many.
+\end{proof}
+
+Summing over all $u\in G_i$ we get that the number of destroyed edges $uv$ with $u,v\in G_i$ is
+\[ \frac{k}{t(i)}t(i) =k\,. \]
+There are at most $\log^*n$ rank groups, so the total contribution is $k\log^*n$.
+
+In total, the number of edges ever traversed is $O(k + k\log^* n)$.
+
+\appendix
 \chapter{Answers}
 
 \shipoutAnswer
