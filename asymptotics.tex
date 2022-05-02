@@ -30,42 +30,532 @@
 \ExerciseHeaderOrigin\ignorespaces}
 \renewcommand{\AnswerListHeader}{\textbf{\ExerciseHeaderNB.\ }}
 
-\title{Additional Note for Algorithms and Data Structures}
+\title{Additional Notes for Algorithms and Data Structures about Notation for Analysis of Algorithms}
 \author{Thore Husfeldt}
 \date{\small Revision {\tt \GITAbrHash}$\ldots$, \GITAuthorDate, \GITAuthorName}
 \begin{document}
 \maketitle
 
-\chapter{Asymptotic Notation: Definitions and Properties}
+\chapter{Big Oh}
+
 
 \begin{summary}
-  This note includes a careful development of tilde and Landau notation.
-  	
-
 This note is about notation for the growth of functions encountered in the analysis of algortithms, sometimes called asymptotic\footnote{%
   The term “asymptotic” is highly misleading, it means “not falling together”, highlighting the fact that the function \(x\mapsto 1/x\) never touches the x-axis (its “asymptote”).
   This aspect of \emph{not touching} plays no role for us at all, it is in fact \emph{false}: 
-  Our asymptotic notions are reflexive, so a function is asymptotically itself.
-  You are advised to ignore your knowledge of Greek and read the word “asymptotically” as a synonym of “for large \(n\)“.}
+  Our asymptotic notions are reflexive, so a function is asymptotically itself in that sense.
+  You are advised to ignore your knowledge of Greek and stick to calling it ``$O$-notation''.}
 notation.
+
+Following Rutanen, we introduce Big-Oh notation as linear dominance, instead of asymptotic linear dominance.
+The current version is of a highly preliminary nature.
 \end{summary}
 
-\section{Why do this?}
 
-We begin by introducing notation, intuition, and rules for use.
-Precise definitions and explanation are given later.
+\section{Asymptotic bound: Big Oh}
 
-First, though: Why are we doing this at all?
-We need a toolset to compare functions, because we want to compare the running times of algorithms, which are given as functions (typically of the input size). 
-We both want to be able to say ``$f$ is roughly equal to $g$,''  and ``$f$ is bounded by $g$`` for a certain granularity of ``roughly'' that is both precise enough to be interesting and coarse enough to be useful.
+The notation \(f\in O(g) \), is a “fuzzy version of \(f\leq g\).”
+It is defined in terms of the \emph{set of functions} $O(g)$, which one can think of as all function that are ``at most $g$ times a positive constant'', i.e., 
+\[ O(g) = \{ \ldots, \sqrt{g}, \ldots, \tfrac{1}{100}g,  \ldots,g, \ldots,\pi g, \ldots,235g\ldots\}\,.\]
 
-Note that we \emph{do} already a definition for have ``precisely equal,'' which is typically written as $f=g$ and defined as
-\[ f(x) = g(x)\qquad\text{for all $x$}\,.\]
-That was easy to define, but it is also quite useless for us; if $f(n) = n$ and $g(n)= n + 1$ then $f\neq g$ (but we want to treat those two running times as ``the same'').
-Similarly we \emph{do} already a definition for ``bounded by,'' typically written as $f\leq g$ and defined as
-\[ f(x) \leq g(x)\qquad\text{for all $x$}\,.\]
-This is also quite useless: if $f(n) = n^2$ and $g(n)= n^3$ then $f\not\leq g$ because $(-1)^2 \not\leq (-1)^3$.
-(But we really want to be able to say that a quadratic-time algorithm is better than a cubic-time one.)
+We start with a precise definition for functions that are defined on the set of positive integers $\mathbf N =\{1,2,\ldots, \}$.
+For many applications, this is completely sufficient.
+
+\begin{definition}[$O$ as linear  dominance, monovariate on positive integers]
+  \label{def:Omonovariate}
+  Let $f, g\colon \mathbf N\rightarrow\mathbf R_{\geq 0}$.
+  Then $f \in O(g)$ if there exist $c>0$ such that
+  \[ f(n)\leq cg(n)\quad\text{for all $n\in \mathbf N$}\,. \]
+\end{definition}
+
+The notation \(f \in O(g)\) is often read as “eff is big-oh of gee“, or just “eff is oh of gee”, or “eff is order of  gee.'' 
+
+\begin{example}
+Some usage examples are:
+  \[ n + 1 \in O(n) \quad\text{for $n\in\mathbf N$}\]
+  and
+  \[ n^2 -n + 5 \in O(n^2) \quad\text{for $n\in\mathbf N$}\]
+and also
+\[ 2n \in O ( n) \quad\text{for $n\in\mathbf N$}\,,\]
+but  
+\[ n^2 - n + 5 \notin O(n) \quad\text{for $n\in\mathbf N$}\,. \] 
+\end{example}
+
+As a convention, we will often  include the ``$n\in\mathbf N$'' for clarity (even though it is implicit in Definition~\ref{def:Omonovariate}) in this section.
+
+
+\begin{theorem}[As a relation]
+  \label{thm: Oh as a relation}
+The relation between \(f\) and \(g\) when \(f=O(g)\) is
+  \begin{description}
+    \item[reflexive:] \( f \in O(f)\)
+    \item[transitive:] if \( f\in O( g)\) and \(g\in O(h)\) then \(f\in O( h)\).
+  \end{description}
+\end{theorem}
+
+The $O$-relation is \emph{not} symmetric.
+For instance, $n^2\notin O(n)$ (even though $n\in O(n^2)$.)
+
+\begin{theorem}[Properties] 
+  \label{thm: Oh rules}
+  \begin{description}
+    \item[order-consistent] If \(f\leq g\) then \(f \in O(g)\).
+    \item[scale-invariance] \(O(\alpha f) = O(f)\) for every real number $\alpha > 0$.
+    \item[additive] \( O(f)+ O( g) = O(f + g)\).
+    \item[multiplicative] \( O(f)\cdot O( g) = O(f \cdot g)\).
+    \item[homogenuous] $fO(g) = O(fg)$.
+    \item[monotone] If $f\leq g$ then $O(f) \subseteq O(g)$.
+    \item[sum is max] $O(f + g) = O(\max \{f, g\})$
+    \item[max is sum] $\max\{O(f) , O(g)\} = O(f) + O(g)$
+  \end{description}
+\end{theorem}
+
+\begin{proof}
+  If $f\leq g$ then in particular $f(x)\leq 1\cdot g(x)$, so $f\in O(g)$.
+
+  The other proofs are tedious but easy.
+  For instance, let us show  $O(f)+ O( g) \subseteq O(f + g)$.
+  Consider $h\in O(f) + O(g)$.
+  This means there is $f'\in O(f)$ and $g'\in O(g)$ such that $h=f'+g'$.
+  Since $f'\in O(f)$ there exists $c_1>0$ such that $f'(n)\leq c_1 f(n)$ for all $n\in \mathbf N$.
+  Similarly,  there exists $c_2>0$ such that $g'(n)\leq c_2g(n)$ for all $n\in \mathbf N$.
+  Thus, we have $h(n) = f'(n) + g'(n) \leq c_1f(n) + c_2 g(n) \leq c\cdot (f(n) + g(n)) = c\cdot (f+g)(x)$ for $c=\max\{c_1,c_2\}$.
+  In particular, $h\in O(f + g)$
+\end{proof}
+
+\begin{example}
+  For $n\in\mathbf N$,
+  \begin{enumerate}
+    \item $\frac12 n \in O(n)$
+    \item $n + 1\in O(n)$
+    \item $3n \cdot \log ( n^6) \in O(n\log n)$
+    \item $170 n \in O(n)$
+    \item $170 n + 10 n \in O(n)$
+    \item $170 n + \log n \in O(n)$
+    \item $\ln n \in O(\log n)$
+    \item $\log n \in O(\ln n)$
+    \item $\log n \in O(n)$
+    \item $\sqrt n \in O(n)$
+    \item $n \in O(1 + n\log n)$
+    \item $n \in O(n^2)$
+    \item $(\log_2 n)^3 \in O(n^{1/4})$
+    \item $\frac16 n^3 \in O(n^3)$
+    \item $\binom{n}{3} \in O(n^3)$
+    \item $2^n \in O(3^n)$.
+    \item $n^{16} \in O(2^n)$.
+  \end{enumerate}
+
+  Most of these are mindless calculus exercises.
+  For instance, $\log n \leq n$ for $n\in\mathbf N$ can be proved by induction or calculus (or eye-balling a function plot), at which point order-consistency applies.
+\end{example}
+
+\begin{example}
+  \begin{enumerate}
+\item $n^2\notin O(n)$
+\item $n^2\notin O(n\log n)$
+\item $n\notin O(\log n)$
+\item $n^{1/4}\notin \log n$
+\item $3^n\notin O(2^n)$
+  \end{enumerate}
+\end{example}
+
+The behaviour of $O$ on polynomials can be summarised in the following useful result:
+
+\begin{theorem}
+   $a_kn^k +a_{k-1}n^{k-1} + \cdots + a_1 n + a_0 \in O(n^k)$ for $n\geq 1$.
+\end{theorem}
+
+\begin{proof}
+  Let $a=\max\{a_0,\ldots, a_k\}$. 
+  Then every term is bounded as $a_in^i \leq an^i$.
+  Moreover, $n^i = n^i 1^{k-i}\leq n^i\cdot n^{k-i} = n^k$ for all $i$ because $n\geq 1$.
+  Thus, \[
+    a_kn^k +a_{k-1}n^{k-1} + \cdots + a_1 n + a_0  \leq
+    an^k +an^k + \cdots + ka n^k + k an^k = kan^k \in O(n^k).\]
+\end{proof}
+
+
+\begin{example}
+ We have
+  \[ \binom{n}{2} \in O(n^2)\quad n\in\mathbf N\,,\]
+  because  $\binom{n}{2} = \frac12n (n-1)$.
+\end{example}
+
+
+\begin{example}[Warning $\star$]
+  \label{ref:binowarning}
+  Note that according to Definition~\ref{def:Omonovariate}, we have $n^2 \notin O(\binom{n}{2})$ for $n\in\mathbf N$.
+  (This is because $\binom{1}{2}= 0$, so there is no way to make $1^2 \leq c \binom{1}{2}$ no matter how large $c$ is chosen.)
+\end{example}
+
+\begin{exercise}
+  Give a $O$-estimate for $\binom{n}{3}$.
+\end{exercise}
+
+\subsection{Non-examples}
+
+Here are some examples of $f\notin O(g)$.
+
+\begin{example}
+  $4^n \notin O(2^n)$.
+
+  This is a popular misunderstanding, possibly induced by the (correct) claim that $2\cdot 2^n\in O(2^n)$ and some confusion of $2\cdot (2^n)$ and ${(2\cdot 2)}^n$.
+
+  Another (faulty) argument is idea of applying the logarithm to both $4^n$ and $2^n$, arriving at $n\log 4$ and $n\log 2$ and using the (correct) statement that $n\log 4\in O(n\log 2)$.
+  That reasoning is not valid.
+  
+  Yet another mistaken argument is to reason as follows:
+  Define function $f(n)=2^n$.
+  Then $f(2n) = 2^{2n} = 4^n$. (Correct so far.)
+  But for every constant $\alpha$, we have $f(\alpha n) =^?  O(f(n))$, so $4^n = f(2n) =^? O(f(n))=O(2^n)$.
+  But no such rules exist, and I've marked the false statements with in the above argument with `?'.
+
+\medskip
+  To see that indeed $4^n\notin O(2^n)$, assume the opposite, namely $4^n\in O(2^n)$.
+  Then, by definition there exists a constant $c>0$ such that $4^n\leq c2^n$ for all $n\geq 1$.
+  Dividing by $2^n$ we have $c \geq 2^n$, but this is false for $n \geq \lceil\log_2 (c+1)\rceil$.
+\end{example}
+
+\begin{example}
+  $n^2 \notin O(n)$.
+
+  This is just plain false, despite its symmetrical claim, $n\in O(n^2)$ being true.
+\end{example}
+
+
+The above counterexamples hold no matter which definition of $O$ you use.
+The following counterexample is specific for \emph{our} definition.
+
+\begin{example} $\star$
+  Define $O$ as in Definition~\ref{def:Omonovariate}.
+  Then $n\notin O(n\log n)$ for $n\geq 1$.
+  
+  (Why? If $n\leq c n\log n$ for all $n \neq 1$ then in particular, $1\leq c 1\log 1 = 0$, which is absurd.)
+
+	
+  Similarly, $O(\log n) \neq O(1 + \log n)$ for $n\geq 1$.
+\end{example}
+
+\section{Asymptotic Equality: Big Theta}
+
+The notation \(f\in \Theta(g) \) is a “fuzzy version of \(f=  g\)” or a “symmetric version of $O$.”
+
+\begin{definition}
+  $f\in \Theta(g)$ if $f\in O(g)$ and $g\in O(f)$.
+\end{definition}
+
+\begin{example}
+  For $n\in \mathbf N$, some usage examples are:
+\[ n + 1 \in \Theta(n), \quad n^2 - n + 5 \in \Theta( n^2), \] 
+and also
+\[ 2n \in \Theta ( n)\,,\]
+but  
+\[ n^2 - n + 5 \notin  \Theta(n)\,. \] 
+\end{example}
+
+\begin{theorem}[as a relation]
+  \label{thm: Oh as a relation}
+The relation between \(f\) and \(g\) when \(f\in \Theta(g)\) is an equivalence relation:
+  \begin{description}
+    \item[reflexive:] \( f \in \Theta(f)\)
+    \item[symmetric:] if \( f \in \Theta(g)\) then \(g \in \Theta(f)\)
+    \item[transitive:] if \( f\in \Theta ( g)\)  and   \(g= \Theta(h)\) then \(f= \Theta( h)\).
+  \end{description}
+\end{theorem}
+
+
+
+\section{Conventions}
+
+
+The curious expression \(O(1)\) means “any positive constant.” 
+Directly from the defintion it is the set of functions $f$ such that there is a number $c>0$ with $f(n)\leq c\cdot 1$.
+Examples are $\cos$ and $\sin$ (both of which are bounded by $1$.
+Typically, it is used for ``some constant, maybe $17$ or $18$ or something.''
+
+Expressions like $O(3n)$ makes sense, but are confusing and unprofessional and should be avoided; the expression $O(3n)$ means the same as $O(n)$.
+
+Similarly, don’t write ``the number of comparisons is $\sim 3n^2  - 5n +7$.''
+While it may not be \emph{false}, this expression signals lack of mastery of the notation, you should write
+``the number of comparisons is $\sim 3n^2$.''
+
+Similarly, you should reduce expressions inside a $O$:
+The expression $O(n^3 + n^2(n + 16n + \log n))$ is equal to $O(n^3)$;
+the two expressions mean exaclty the same.
+Since the whole point of $O$ was to reduce clutter, the latter form is strongly preferred.
+(The former form signals limited understand of how and why the notation is used.)
+
+Most users of this notation are mainly interested in performance guarantees in terms of upper bounds, so one often sees $O$ used where $\Theta$ would have been just as appropiate.
+
+
+
+\section{Daily Use}
+
+\subsection{Basic programme analysis}
+
+
+\begin{example}
+Here is a programme that counts the $0$s in an array $a$ of length $n\geq 1$:
+
+\begin{quotation}
+  \begin{tabbing}
+    xxxx\=xxxx\=xxxx\=\kill
+    $c \leftarrow{} 0$\\
+    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
+    \> \textbf{if\ } $a[i] = 0$\\
+    \>\> $c\leftarrow{} c + 1$\\
+  \end{tabbing}
+\end{quotation}
+
+We want to determine the number of assignments.
+
+The first line use exacly $1$ assignment.
+The iteration is more interesting.
+Depending on the value of $a[i]$, the \textbf{if}-branch costs $0$ or $1$ assignments.
+In the worst case, this is $\max\{0,1\} = 1$, which is the worst-case cost for the body of the loop.
+The \text{for}-expression implictly stands for $n$ assigments $i\leftarrow 1$, $\ldots$, $i \leftarrow n$ and executes the body $n$ times, for a total of $2n$ assignments.
+
+(Arguably, these analyses are so banal that it's hard to see what the notation accomplishes.
+It gets more interesting now.)
+
+Adding the $1$ contributions from the first line we arrive at $2n+1=  O(n)$ for $n\geq 1$.
+We used $O$-notation only at the end, to simplify the expression.
+We could also have written  $2n+1= \Theta(n)$
+\end{example}
+
+
+\begin{example}
+Let us make the above piece of code slighly more interesting to show off $O$.
+Assume now that $a$ is some data structure containing $n$ elements, with $n\geq 1$.
+Further assume that $a.\mathit{popleft}()$ is known to take $O(m)$ time when $a$ contains $m$ elements.
+(Think of $a$ as an array-based list.)
+The $O(m)$ bound may come from a previous analysis, or a textbook, or the library documentation.
+
+\begin{quotation}
+  \begin{tabbing}
+    xxxx\=xxxx\=xxxx\=\kill
+    $c \leftarrow{} 0$\\
+    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
+    \> \textbf{if\ } $a.\mathit{popleft}() = 0$\\
+    \>\> $c\leftarrow{} c + 1$\\
+  \end{tabbing}
+\end{quotation}
+
+Evaluating the \textbf{if}-statement now costs $O(m)$ for $m\in \{n, n-1,\ldots, 1\}$.
+With foresight, we bound each of them as $O(n)$, using the fact that $ m \leq n$ so that $O( m)\subseteq  O( n)$ by monotonicity of $O$.
+Including the $1$-contribution from the assigment, the whole \textbf{if}-statement costs $1+O(n) = O(1) + O(n)= O(n + 1) = O(\max{n, 1})=  O(n)$.
+The \textbf{for}-loop now costs $n \cdot (1 + O(n))$, which simplifies to $O(n^2)$ for $n\in \mathbf N$.
+Adding the contribution from the first line does not change this.
+\end{example}
+
+Note that in this example, it was crucial that we were freely able to manipulate the $O(m)$-expression for the beviour of \emph{popleft} that we inherited.
+
+\subsection{Syntactic analysis}
+
+\newcommand{\cost}{\operatorname{cost}}
+
+It is possible to formalise the syntactic approach by writing down general rules for determining the cost  $\cost_n(P)$ of programme $P$ and parameter $n$.
+
+\begin{description}
+  \item[Assignment:] If $\cost_n(x\leftarrow a)$. All other atomic statements cost $0$.
+  \item[Sequence:] If $P = Q; R$ with $\cost_n(Q) =f$, $\cost_n(R)= g$ then $\cost_n(P)= f + g$.
+  \item[Selection:] If $P = \mathbf{if\ } b \mathbf{\ then\ } Q \mathbf{\ else\ } R$ with $\cost_n(Q) =f$, $\cost_n(R)= g$ and $\cost_n(b)= h$ then $\cost_n(P) = b + \max (f, g)$.
+  \item[Iteration:] If $P = \mathbf{for\ }i\in I \mathbf{\ do\ }  Q$ then $\cost_n(P) = |I|(1 + \cost_n(Q))$.
+\end{description}
+
+However, there is no strong tradition for this degree of formalism in the analysis of algorithms, so we will not pursue it further.
+
+\subsection{Conventions}
+
+\begin{example}[Placeholder]
+  When we say ``Insertion sort on $n\geq 1$ elements costs $O(n^2)$'', or ``The running time of Insertion sort on $n\geq 1$ elements is $O(n^2)$''  we mean ``The cost of Insertion sort on $n\geq 1$ elements is given by a cost function $f\in O(n^2)$.''
+  This is just convenient type, despite the ``type error'' of pretending that a cost is a \emph{set of functions} rather than a function.
+  A way of expressing this both pleasantly and properly would be ``The running time of Insertion sort on $n\geq 1$ elements \emph{belongs to} $O(n^2)$.''
+\end{example}
+
+
+\section{More about Logarithms}
+
+We want to say something more general about the relationship between logarithms and power functions.
+Such expressions appear frequently in the analysis of algorithms, for instance when comparing shellsort \(O(n^{3/2})\) to mergesort \(O(n\log n)\), or \(\sqrt{n}\)-trees to balanced binary search trees.
+
+
+\begin{theorem}[ln versus power]
+  For all exponents \(a>0\), \[ \ln n = O(n^a), \qquad(n\geq 1)\,.\]
+\end{theorem}
+
+Unfortunately, I know no short and easy proof for these relationships.
+
+\begin{proof}
+We have
+\[
+\frac{1}{y} \leq y \qquad(\text{for any } y \geq 1)\,.
+\]
+Thus, for any \(z\geq 1\),
+\[
+\int_1^z \frac{1}{y} \,dy\leq  \int_1^z y\, dy \,,
+\]
+so that \[ \ln z \leq \tfrac{1}{2} z^2\,.\]
+In particular, if we choose \(z = n^{a/2}\),
+then we have \( \ln n^{a/2} \leq \frac{1}{2} (n^{a/2})^2\), which simplifies to
+\[  a\ln n \leq    n^a\qquad(n\geq 1)\,. \]
+  In other words, $\ln n \leq \frac1a n^a$.
+  Conclusion by order-consistency and scale-invariance of $O$.
+\end{proof}
+
+An even more general bound is the following:
+
+\begin{theorem}[polylog versus power]
+  For all  bases \(r> 1\) and exponents \(a>0\) and \(k> 0\), \[ (\log_r x)^k = O(x^a)\,.\]
+\end{theorem}
+
+\begin{proof}
+  The proof is almost identical to the previous; set $z=n^{a/2k}$, so that 
+  $\ln n^{a/2k} = \frac12(n^{a/2k})^2 = \frac12 n^{a/k}$.
+  We arrive at \[ \frac{a}{k} \ln n \leq n^{a/k}\,,\]
+  so $\ln n \leq (k/a)n^{a/k}$ and thus 
+  \[ (\log_r n)^k = \bigl(\frac{\ln n}{\ln r}\bigr)^k \leq  \bigl(\frac{k}{a\ln r}\bigr)^k n^a\,;\]
+  note that $r$, $a$, and $k$ are constants so scale-invariance makes short work of them.
+\end{proof}
+
+
+\section{Big Oh Defined in General}
+
+We now define $O$ for the general case, in terms of linear dominance.
+
+\begin{definition}[$O$ as linear dominance]%
+  \label{def:Olineardominance}
+  Let $X$ be a set and consider $f, g\colon X\rightarrow \mathbf R_{\geq 0}$.
+Then $f= O(g)$ if there exists a positive real number $c>0$  such that
+that \( f(x)\leq cg(x)\) for all $x\in X$.
+\end{definition}
+
+Definition~\ref{def:Omonovariate} is the special case $X=\mathbf N$ and suffices for many analyses.
+We need the full definition in two contexts that often arise.
+
+\begin{description}
+    \item [Restrict the domain.] For some functions, we need to be able to restric the domain, for instance, we want to talk about $O(\log n)$ or $O(\binom{n}{2})$, both of which are problematic for $n=1$.
+      (They are both $0$, so under the simplified Definition~\ref{def:Omonovariate}, we unfortunately have both $1\notin O(\log n)$ and $n^2\notin O(\binom{n}{2})$, because of the behaviour at $n=1$, neither of which is helpful.)
+      We can solve this by setting $X=\{2,3,\dots\} = \mathbf N-\{1\}$.
+    \item [Extend the domain.] Many data structures and algorithms need expression in two variables, such as the number $n$ of vertices and the number $m$ of edges, or the number $k$ of queries to a data structure of size $n$.
+      In those situations, we want to set $X=\mathbf N\times \mathbf N$ and work with expressions such as $O(m(m+n))$ or $O(k(1 + \log n))$.
+\end{description}
+
+
+\subsection{Daily use}
+
+Specifying the domain $X$ sometimes leads to clumsy expressions, and we will prefer to define $X$ implictly by always stating bounds on our parameters.
+
+\begin{example}[Implicit domain specifation]
+  We want two write human-readable expressions like the following:
+
+  \begin{quote}
+  {\bf Claim.} Mergesort of $n\geq 2$ elements takes time $O(n\log n)$.
+  \end{quote}
+
+  What this claim expresses more formally is that if $X=\{2,3,\ldots\}$ and $f\colon X\rightarrow\mathbf R_{\geq 0}$ is such that $f(n)$ denotes the cost of Merge Sort on instances of size $n\in X$ then $f\in O(n\log n)$.
+\end{example}
+
+Our use here aims to strike a compromise between on one side readibility and consistency with established notation, and on the other side precision and meaning.
+A formally satisfying development of Definition~\ref{def:Olineardominance} would require separate $O$-sets for every domain $X$,encumbering the notation with expressions like $O_X$, $O_{\mathbf N\times N}$.
+The reader is referred to the thesis of Rutanen for such an approach.
+
+
+\begin{example}[Careful with small $n$]
+  Note that the stronger claim that ``Mergesort on $n\geq 1$ elements takes time $O(n\log n)$'' in particular means that it takes \emph{no} time for $n=1$.
+  This may be true or not, depending on the cost function or implementation. 
+  (For instance, an implementation may indeed spend zero array accessses when it can determine that $n=1$.)
+  But we have to be careful.
+\end{example}
+
+\subsection{Important functions}
+
+\begin{example}[Binomial coefficient revisited]
+  We return to the example from \ref{ref:binowarning} and finally establish
+  \[ \binom{n}{2} = \Theta(n^2) \quad\text{for } n\geq 2\,.\]
+
+  It remains to show $n^2\in O(\binom{n}{2})$ for $n\geq 2$.
+  But if $n\geq 2$ then $n-1 \geq \frac12n$, so
+  $\binom{n}{2} = \frac12n(n-1) \geq  \frac14n^2$.
+  Thus, $n^2\leq 4\binom{n}{2}$, so $n^2\in O(\binom{n}{2})$ from the definition (with $c=4$).
+\end{example}
+
+
+\begin{example}[Expressions with logarithms]
+  The following hold for $n\geq 2$:
+  \begin{enumerate}
+    \item $1\in O(\log n)$
+    \item $1\in O(\log^* n)$
+    \item $n\in O(n\log n)$
+  \end{enumerate}
+  The following hold for $n\geq 3$:
+  \begin{enumerate}
+    \item $1\in O(\log\log n)$
+    \item $n\in O(n\log\log n)$
+  \end{enumerate}
+\end{example}
+
+\subsection{Multivariate functions}
+
+In the following example, assume that $a$ has length $m\geq n$ and recall that we assume \emph{popleft} takes $O(s)$ time if $a$ has $s$ eleements.
+
+\begin{quotation}
+  \begin{tabbing}
+    xxxx\=xxxx\=xxxx\=\kill
+    $c \leftarrow{} 0$\\
+    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
+    \> \textbf{if\ } $a.\mathit{popleft}() = 0$\\
+    \>\> $c\leftarrow{} c + 1$\\
+  \end{tabbing}
+\end{quotation}
+
+Assume $n\geq 1$.
+The costs for each of the  $n$  executions of the \emph{if}-statement are $O(m)$, $O(m-1)$, $\ldots$, $O(m-n)$, respectively, which we bound by $O(m)$.
+The cost for increasing $c$ does not change this, since $m\geq n\geq 1$.
+The total cost becomes $1 + n\cdot O(m) = O(nm)$.
+
+\medskip
+What happens \emph{formally} in the above analysis is that $X = \mathbf N\times \mathbf N$ and the cost function has the form $f\colon \mathbf N\times \mathbf N$.
+Specifically, the cost of the \textbf{if}-statement is $f_{\textbf{if}} (n,m) \in O(m - n)\subseteq O(m)$.
+The cost of the \textbf{for}-loop is $f_{\textbf{for}}(n, m) = n\cdot f_{\textbf{if}} (n,m) \in  n\cdot O(m)=O(mn)$.
+This kind of precision is not normally used.
+
+
+\section{A word of warning}
+
+Definition~\ref{def:Olineardominance}  is \emph{not} the standard definition of $O$ found in most textbooks.
+(We define $O$ in terms of ``linear dominance''; the standard definition uses ``asymptotic linear dominance on $\mathbf N$''.)
+
+For completeness, here is the standard definition:
+
+\begin{definition}[Asymptotic linear dominance]%
+  \label{def:ald}
+  Let $f, g\colon \mathbf N\rightarrow \mathbf R_{\geq 0}$.
+  Then $f= O_{\mathrm a}(g)$ if there exists a positive real number $c>0$ and an integer $N\in \mathbf{N}$ such that
+that \( f(n)\leq cg(n)\) for all $n \geq N$.
+\end{definition}
+
+(There are a number of immaterial variations of the  definition (using $\mathbf N_0=\{0,1,\ldots\}$ instead of $\mathbf N$, or requiring $|f(n)|\leq cg(n)$.))
+
+For functions like $n$, $n^2$, it does not matter whether we use Definition~\ref{def:Omonovariate} or \ref{def:ald}, indeed $O(n^2)= O_{\mathrm a}(n^2)$ for $n\in \mathbf N$.
+The difference appears mainly in the behaviour of functions that vanish for small $n$, such as $\log n$, $n\log n$, and $\binom{n}{2}$.
+For instance $\log 1=0$, $1\log 1 =0$, and $\binom{1}{2}=0$ so that  $O(n\log n)\neq O_{\mathrm a}(n\log n)$ for $n\in \mathrm N$.
+
+If we were using the standard definition~\ref{def:ald}, we could gloss over these details.
+However, in daily use, a stipulation of ``for large enough $n$'' is understood and few practictioners would ever raise an eyebrow at seeing the expression $n\in O(n\log n)$ without the (formally crucial) restriction to $n\geq 2$ or much care about which definition has been used.
+
+\chapter{Tilde}
+
+
+\begin{summary}
+  This section was an attempt to carefully explain limits before tildes, because limits were also useful to define $O$ (or so it seemed to be before 2022.)
+
+  By the much better definition in the previous chapter, this all may be a waste of effort.
+  In any case, it's a draft.
+  Don't trust a word of it.
+\end{summary}
+
+
 
 \section{Asymptotic equality: tilde}
 
@@ -168,356 +658,6 @@ In summary, think of \(\sim\) as some fuzzy equality symbol.
 The most useful fuzziness is that we can disregard lower order terms (but have to pay attention to the constant in front of the highest-order term.)
 
 
-\section{Asymptotic bound: Big Oh}
-
-The notation \(f\in O(g) \), is a “fuzzy version of \(f\leq g\).”
-It is defined in terms of the \emph{set of functions} $O(g)$, which one can think of as all function that are ``$g$ times a positive constant'', i.e., 
-\[ O(g) = \{ \ldots, \frac{1}{100}g, \ldots,\frac12g, \ldots,g, \ldots,2g, \ldots,\pi g, \ldots,235g\ldots\}\,.\]
-
-We start with a precise definition for functions that are defined on the set of positive integers $\mathbf N =\{1,2,\ldots, \}$, which suffices for many of our applications.
-\begin{definition}[As linear  dominance, monovariate, on positive integers]
-  Let $f, g\colon \mathbf N\rightarrow\mathbf R_{\geq 0}$.
-  Then $f \in O(g)$ if there exist $c>0$ such that
-  \[ f(n)\leq cg(n)\quad\text{for all $n\in \mathbf N$}\,. \]
-\end{definition}
-
-The notation \(f \in O(g)\) is often read as “eff is big-oh of gee“, or just “eff is oh of gee”, or “eff is order of  gee.'' 
-
-\begin{example}
-Some usage examples are:
-  \[ n + 1 =O(n) \quad\text{ for $n\in\mathbf N$}\]
-  and
-  \[ n^2 -n + 5 =O(n^2) \quad\text{ for $n\in\mathbf N$}\]
-and also
-\[ 2n =O ( n) \quad\text{ for $n\in\mathbf N$}\,,\]
-but  
-\[ n^2 - n + 5 \notin O(n) \text{ for $n\in\mathbf N$}\,. \] 
-\end{example}
-
-Note that the analogue of $3n\log_2 n + 100 n\sim 3 n\log_2 n$ is suspiciously absent from the above example.
-We will come back to it.
-
-
-\begin{theorem}[as a relation]
-  \label{thm: Oh as a relation}
-The relation between \(f\) and \(g\) when \(f=O(g)\) is
-  \begin{description}
-    \item[reflexive:] \( f \in O(f)\)
-    \item[transitive:] if \( f\in O( g)\) and \(g\in O(h)\) then \(f\in O( h)\).
-  \end{description}
-\end{theorem}
-
-The $O$-relation is \emph{not} symmetric.
-For instance, $n^2\notin O(n)$ (even though $n\in O(n^2)$.)
-
-\begin{theorem}[rules] 
-  \label{thm: Oh rules}
-  $O$-notation satisfies the following rules for functions defined on the positive integers:
-
-  \begin{description}
-    \item[order-consistent] If \(f\leq g\) then \(f \in O(g)\).
-    \item[scale-invariance] \(O(\alpha f) = O(f)\) for every real number $\alpha > 0$.
-    \item[additive] \( O(f)+ O( g) = O(f + g)\).
-    \item[multiplicative] \( O(f)\cdot O( g) = O(f \cdot g)\).
-    \item[homogenuous] $fO(g) = O(fg)$ for every $n\in \mathbf N$
-    \item[sum is max] $O(f + g) = O(\max \{f, g\})$
-    \item[max is sum] $\max\{O(f) , O(g)\} = O(f) + O(g)$
-  \end{description}
-\end{theorem}
-
-\begin{example}
-  For $n\in\mathbf N$,
-\begin{enumerate}
-\item $\frac12 n \in O(n)$
-\item $3n \cdot \log^6 n \in O(n\log n)$
-\item $170 n \in O(n)$
-\item $170 n + 10 n \in O(n)$
-\item $170 n + \log n \in O(n)$
-\item $\ln n \in O(\log n)$
-\item $\log n \in O(\ln n)$
-\item $\log n \in O(n)$
-\item $\sqrt n \in O(n)$
-\item $n \in O(n^3)$
-\item $(\log_2 n)^3 \in O(n^{1/4})$
-\item $\frac16 n^3 \in O(n^3)$
-\item $\binom{n}{3} \in O(n^3)$
-\item $2^n \in O(3^n)$.
-\end{enumerate}
-\end{example}
-
-\begin{example}
-  \begin{enumerate}
-\item $n^2\notin O(n)$
-\item $n^2\notin O(n\log n)$
-\item $n\notin O(\log n)$
-\item $n\notin O(n/\log n)$
-\item $3^n\notin O(2^n)$
-\item $n^{1/4}\notin \log n$
-  \end{enumerate}
-\end{example}
-
-\section{Asymptotic Equality: Big Theta}
-
-The notation \(f\in O(g) \) is a “fuzzy version of \(f\leq g\).”
-In particular, it is \emph{more} fuzzy than $f\sim g$.
-
-\begin{definition}
-  $f\in \Theta(g)$ if $f\in O(g)$ and $g\in O(f)$.
-\end{definition}
-
-\begin{example}
-  For $n\in \mathbf N$, some usage examples are:
-\[ n + 1 \in \Theta(n), \quad n^2 - n + 5 \in \Theta( n^2), \] 
-and also
-\[ 2n \in \Theta ( n)\,,\]
-but  
-\[ n^2 - n + 5 \notin  \Theta(n)\,. \] 
-\end{example}
-
-\begin{theorem}[as a relation]
-  \label{thm: Oh as a relation}
-The relation between \(f\) and \(g\) when \(f\in \Theta(g)\) is an equivalence relation:
-  \begin{description}
-    \item[reflexive:] \( f \in \Theta(f)\)
-    \item[symmetric:] if \( f \in \Theta(g)\) then \(g \in \Theta(f)\)
-    \item[transitive:] if \( f\in \Theta ( g)\)  and   \(g= \Theta(h)\) then \(f= \Theta( h)\).
-  \end{description}
-\end{theorem}
-
-\section{Similarities and differences}
-
-%\begin{theorem}[tilde and Theta]\label{thm: tilde and Oh}
-%  If \(f\sim g\) then \(f \in \Theta(g)\) but not vice versa.
-%\end{theorem}
-%
-%\begin{theorem}[Theta and Oh]\label{thm: tilde and Oh}
-%  If \(f\in \Theta(g)\) then \(f \in O(g)\) but not vice versa.
-%\end{theorem}
-%
-%Let's establish rule~\ref{item: Oh polynomial} from Theorem~\ref{thm: Oh rule} using the above theorem:
-%
-%\begin{example}
-%  We will show \[ #    a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 =  O(n^k)\,.\]
-%  First, from Theorem~\ref{thm: tilde rules}(\ref{item: tilde polynomial}), we have
-%  \[ a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 \sim a_k n^k\,.\]
-%  Using Theorem~\ref{thm: tilde and Oh} we arrive at
-%  \[ a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 = O(a_k n^k)\,.\]
-%  Since $a_k$ is a constant, we also have $a_k n^k = O(n^k)$.
-%  Thus, using transitivity (Theorem~\ref{thm: Oh as a relation}), we can deduce
-%  \[ a_k n^k + a_{k-1} n^{k-1} + \cdots + a_1 n + a_0 = O(n^k)\,.\]
-%\end{example}
-
-\begin{example}
-  Recall that $\binom{n}{2} = \frac12 n(n-1) = \frac 12 n^2 - \frac12 n$.
-We can write
-  \[ \binom{n}{2} \sim \frac12 n^2  \]
-  because \[
-    \frac{\frac12 n^2 - \frac 12 n}{\frac12 n^2}   = 
-    1+ \frac{1}{n},\]
-  which tends towards $1$ as $n$ grows.
-
- We can also write
-  \[ \binom{n}{2} \in O(n^2)\,,\]
-  because if $n\geq 0$, then 
-  \[\tfrac12 n^2 - \tfrac12 n \leq  \tfrac12 n^2 \leq n^2\,\]
-  so that $\binom{n}{2} \in O(n^2)$.
-  To be quite careful, we have used the definition of $O$ with $f(n)=\binom{n}{2}$, $g(n)=n^2$ and $c=1$.
-
-  \medskip
-  Both examples are expressions are ``what $\binom{n}{2}$ roughly is'', and are useful in differernt contexts.
-\end{example}
-
-\begin{exercise}
-  Give tilde and $O$ approximations of $\binom{n}{3}$.
-\end{exercise}
-
-\section{Traps and pitfalls}
-
- \[3n\log n + 100 n = O(n\log n), \] 
-
-
-  We can  even establish
-  \[ \binom{n}{2} \in \Theta(n^2)\,,\]
-  for which we additionally have to prove $n^2\in O(\binom{n}{2})$.
-
-
-\section{Usage conventions}
-
-\subsection{In the wild}
-
-The curious expression \(O(1)\) means “any positive constant.” 
-Directly from the defintion it is the set of functions $f$ such that there is a number $c>0$ with $f(n)\leq c\cdot 1$.
-Examples are $\cos$ and $\sin$ (both of which are bounded by $1$.
-Typically, it is used for ``some constant, maybe $17$ or $18$ or something.''
-
-Expressions like $O(3n)$ makes sense, but are confusing and unprofessional and should be avoided; the expression $O(3n)$ means the same as $O(n)$.
-
-Similarly, don’t write ``the number of comparisons is $\sim 3n^2  - 5n +7$.''
-While it may not be \emph{false}, this expression signals lack of mastery of the notation, you should write
-``the number of comparisons is $\sim 3n^2$.''
-
-Similarly, you should reduce expressions inside a $O$:
-The expression $O(n^3 + n^2(n + 16n + \log n))$ is equal to $O(n^3)$;
-the two expressions mean exaclty the same.
-Since the whole point of $O$ was to reduce clutter, the latter form is strongly preferred.
-(The former form signals limited understand of how and why the notation is used.)
-
-Most users of this notation are mainly interested in performance guarantees in terms of upper bounds, so one often sees $O$ used where $\Theta$ would have been just as appropiate.
-
-\chapter{Daily Use}
-
-We write $\mathbf N=\{1,2,\ldots\}$ and $\mathbf R_{\geq 0}$ for the set of positive, nonzero reals.
-We consider
-\[ f\colon\mathbf N\rightarrow \mathbf R_{\geq 0}\,.\]
-
-\begin{definition}[Monovariate, nonzero O]
-  For $f,g\colon \mathbf N\rightarrow \mathbf R_{\geq 0}$ we write
-  $f\in O(g)$ if there exists $c>0$ such that $f(x) \leq cg(x)$ for all $x\in\mathbf N$.
-\end{definition}
-
-\begin{example}
-  $15\log n \in O(\log n)$.
-  $\frac{1}{64} n \in O(n)$.
-  $n \in O(n^2)$.
-\end{example}
-
-\begin{example}[Counterexample.]
-  $n^2 \notin O(n)$.
-\end{example}
-
-\begin{theorem}
-  The properties in Table~\ref{tab: monovariate} hold for
-  functions $f,g\colon \mathbf N\rightarrow \mathbf R_{\geq 0}$.
-\end{theorem}
-
-\begin{proof}
-  If $f\leq g$ then in particular $f(x)\leq 1\cdot g(x)$, so $f\in O(g)$.
-  The other proofs are tedious but easy.
-  For instance, let $h\in O(f) + O(g)$.
-  This means there is $f'\in O(f)$ and $g'\in O(g)$ such that $h=f'+g'$.
-  Since $f'\in O(f)$ there exists $c_1$ such that $f'(x)\leq c_1 f(x)$ for all $x\in \mathbf N$.
-  Similarly,  there exists $c_2$ such that $g'(x)\leq c_2g(x)$ for all $x\in \mathbf N$.
-  Thus, we have $h(x) = f'(x) + g'(x) \leq c_1f(x) + c_2 g(x) \leq c(f(x) + g(x)) = c(f+g)(x)$ for $c=\max\{c_1,c_2\}$.
-  In particular, $h\in O(f + g)$
-\end{proof}
-
-\begin{table}
-  \begin{tabular}{ll}\toprule
-    order-consistent & $\text{if } f\leq g\text{ then } f\in O(g)$ \\
-    monotone & $\text{if } f\leq g\text{ then } O(f)\subseteq O(g)$ \\
-    reflexive &  $f\in O(f)$ \\
-    transitive &  $\text{if }f\in O(g)\text{ and } g\in O(h)\text{ then } f\in O(h)$ \\
-    scale-invariant & $O(cf) = O(f) \text{ for all $c>0$}$\\
-    homogenuous & $cO(f) = O(f) \text{ for all $c>0$}$\\
-    summation & $O(f) +O(g) = O(f + g)$\\
-    maximum & $O(f + g) = O(\max\{f,  g\})$\\
-    multiplication & $O(f) \cdot O(g) = O(f \cdot  g)$\\\bottomrule
-\end{tabular}
-  \caption{Some useful properties of $O$ defined on functions $f,g\colon \mathbf N\rightarrow \mathbf R_+$.}
-\end{table}
-
-\begin{example}
-  \[6n + 10n\log n \in O(6n) + O(10 n\log n) = O(n) + O(n\log n) = O(n + n\log n) = O(\max\{n, n\log n\})\,.\]
-  Using the rules for reflexivity, scale-invariance, summation and maximum.
-  If we assume $n\geq 2$ then $\log n\geq 1$, so that $n\leq n\log n$. Thus, we can conclude
-  \[6n+10 n\log n\in   O(n\log n)\,\quad (n\geq 2)\,. \]
-  Another way to arrive at the same anwer is 
-  \[6n + 10n\log n \leq 6n\log n +10n\log n = 16n\log n \in O(n\log n)\,, (n\geq 2)\]
-  where we ``switched to big-Oh'' later in the derivation and used more algebra.
-\end{example}
-
-\section{Important functions}
-
-\begin{example}
-  For $n\geq 1$,
-  \begin{enumerate}
-    \item $n\in O(n^2)$ but not vice versa.
-    \item $14\in O(1)$.
-    \item $1\in O(n)$ but not vice versa.
-  \end{enumerate}
-  This follows from basic calculus (for instance, $n\leq n^2$ for $n\geq 1$)
-\end{example}
-
-\begin{example}
-  For $n\geq 2$,
-  \begin{enumerate}
-    \item $\log n\in O(n)$ but not vice versa.
-  \end{enumerate}
-  Basic calculus shows $\log n \leq n$ for $n\geq 2$.
-  Alternatively, use induction over the integers (in particular, $\log (n + 1) \leq \log 2n \leq 1 + \log n\leq 1 + n$).
-\end{example}
-
-\section{Basic programme analysis}
-
-Here is a programme that counts the $0$s in an array $a$ of length $n\geq 1$:
-
-\begin{quotation}
-  \begin{tabbing}
-    xxxx\=xxxx\=xxxx\=\kill
-    $c \leftarrow{} 0$\\
-    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
-    \> \textbf{if\ } $a[i] = 0$\\
-    \>\> $c\leftarrow{} c + 1$\\
-  \end{tabbing}
-\end{quotation}
-
-We want to determine the number of assignments.
-
-The first line use exacly $1$ assignment.
-The iteration is more interesting.
-Depending on the value of $a[i]$, the \textbf{if}-branch costs $0$ or $1$ assignments.
-In the worst case, this is $\max\{0,1\} = 1$, which is the worst-case cost for the body of the loop.
-The \text{for}-expression implictly stands for $n$ assigments $i\leftarrow 1$, $\ldots$, $i \leftarrow n$ and executes the body $n$ times, for a total of $2n$ assignments.
-
-(Arguably, these analyses are so banal that it's hard to see what the notation accomplishes.
-It gets more interesting now.)
-
-Adding the $1$ contributions from the first line we arrive at $2n+1=  O(n)$ for $n\geq 1$.
-We used $O$-notation only at the end, to simplify the expression.
-We could also have written  $2n+1= \Theta(n)$
-
-\bigskip
-
-Let us make th above piece of code slighly more interesting to show off $O$.
-Assume now that $a$ is some data structure containing $n$ elements and that $a.\mathit{popleft}()$ is known to take $O(m)$ time when $a$ contains $m$ elements.
-(Think of $a$ as an array-based list.)
-The $O(m)$ bound may come from a previous analysis, or a textbook, or the library documentation.)
-
-\begin{quotation}
-  \begin{tabbing}
-    xxxx\=xxxx\=xxxx\=\kill
-    $c \leftarrow{} 0$\\
-    \textbf{for\ } $i\in \{1,\ldots,n\}$\\
-    \> \textbf{if\ } $a.\mathit{popleft}() = 0$\\
-    \>\> $c\leftarrow{} c + 1$\\
-  \end{tabbing}
-\end{quotation}
-
-Evaluating the \textbf{if}-statement now costs $O(m)$ for $m\in \{n, n-1,\ldots, 1\}$.
-With foresight, we bound each of them as $O(n)$, using the fact that $ m \leq n$ so that $O( m)\subseteq  O( n)$ by monotonicity of $O$.
-Including the $1$-contribution from the assigment, the whole \textbf{if}-statement costs $1+O(n) = O(1) + O(n)= O(n + 1) = O(\max{n, 1})=  O(n)$.
-The \textbf{for}-loop now costs $n \cdot (1 + O(n))$, which simplifies to $O(n^2)$.
-Adding the contribution from the first line does not change this.
-
-Note that in this example, it was crucial that we could freely manipulate the $O(m)$-expression.
-
-\section{Syntactic rules}
-
-\newcommand{\cost}{\operatorname{cost}}
-
-It is possible to formalise the syntactic approach by writing down general rules for determining the cost  $\cost_n(P)$ of programme $P$ and parameter $n$.
-
-\begin{description}
-  \item[Assignment:] If $\cost_n(x\leftarrow a)$. All other atomic statements cost $0$.
-  \item[Sequence:] If $P = Q; R$ with $\cost_n(Q) =f$, $\cost_n(R)= g$ then $\cost_n(P)= f + g$.
-  \item[Selection:] If $P = \mathbf{if\ } b \mathbf{\ then\ } Q \mathbf{\ else\ } R$ with $\cost_n(Q) =f$, $\cost_n(R)= g$ and $\cost_n(b)= h$ then $\cost_n(P) = b + \max (f, g)$.
-  \item[Iteration:] If $P = \mathbf{for\ }i\in I \mathbf{\ do\ }  Q$ then $\cost_n(P) = |I|(1 + \cost_n(Q))$.
-\end{description}
-
-However, there is no strong tradition for this degree of formalism in the analysis of algorithms, so we will not pursue it further.
-
-
-\chapter{Tilde Explained}
 
 \emph{Warning: the rest of this section is a draft and may contain errors.}
 
@@ -693,138 +833,28 @@ we need the calculation
 \[ \lim \frac{n+ \ln n}{n} = \lim\frac{n}{n} + \lim\frac{\ln n}{n} = 1 + 0= 1\,,\]
 using the laborious argument from Proposition~\ref{prop: log vs linear limit}.
 
-\chapter{Big Oh Explained}
 
-\section{Big Oh Defined}
-\begin{definition}
-Let $f$ and $g$ be real-valued functions defined on the same set of nonnegative real numbers.
-Then $f(x)= O(g(x))$ if there exists a positive real number $B$ and a nonnegative real number $b$ such
-that
-\[ |f(x)| \leq B |g(x)| \qquad\text{for all $x > b$}\,.\]
-\end{definition}
+\chapter{Retired stuff}
 
+Don't read this, it will burn your eyes and rot your soul.
 
-Many very similar definitions exist, they all define the same notion.\footnote{
-  Apart from notational substitions, such as $C$ for $B$ and $n_0$ for $b$, the seemingly bigger differences are:
-  (i) requiring $x\geq b$ instead of $x> b$.
-  This makes no difference: just make $b$ slightly larger/smaller.
-  (ii) defining the domain of $f$ and $g$ as the natural numbers (rather than the nonnegative reals).
-  For our functions (polynomials, logarithms, etc.), this makes no difference.
-  (iii) more interestingly, dropping the norms, so that the requirement is $f(x)\leq B\cdot g(x)$.
-  The functions we are interested in (running times of algorithms) are nonnegative, so $|f(x)|= f(x)$ anyway and therefore this detail in the definition again makes no difference.
-  However, some internal calculations become easier when the norms are kept.
-}
+\section{Why do this?}
 
+We begin by introducing notation, intuition, and rules for use.
+Precise definitions and explanation are given later.
 
-\begin{theorem}
-  Assume $f_1(x) = O(g_1(x))$, and let $C$ be any constant.
-  Then $Cf_1(x) = O(g_1(x))$ and $C+f_1(x) = O(g_1(x))$.
+First, though: Why are we doing this at all?
+We need a toolset to compare functions, because we want to compare the running times of algorithms, which are given as functions (typically of the input size). 
+We both want to be able to say ``$f$ is roughly equal to $g$,''  and ``$f$ is bounded by $g$`` for a certain granularity of ``roughly'' that is both precise enough to be interesting and coarse enough to be useful.
 
-  Moreover, 
-  assume $f_2(x) = O(g_2(x))$.
-  Then, 
-  \begin{enumerate}
-    \item $(f_1 + f_2)(x)  = O((f_1+f_2)(x))$,
-    \item $(f_1 \cdot f_2)(x)  = O((f_1\cdot f_2)(x))$.
-    \end{enumerate}
-  We assume that $g_1$ and $g_2$ are positive.
-\end{theorem}
+Note that we \emph{do} already a definition for have ``precisely equal,'' which is typically written as $f=g$ and defined as
+\[ f(x) = g(x)\qquad\text{for all $x$}\,.\]
+That was easy to define, but it is also quite useless for us; if $f(n) = n$ and $g(n)= n + 1$ then $f\neq g$ (but we want to treat those two running times as ``the same'').
+Similarly we \emph{do} already a definition for ``bounded by,'' typically written as $f\leq g$ and defined as
+\[ f(x) \leq g(x)\qquad\text{for all $x$}\,.\]
+This is also quite useless: if $f(n) = n^2$ and $g(n)= n^3$ then $f\not\leq g$ because $(-1)^2 \not\leq (-1)^3$.
+(But we really want to be able to say that a quadratic-time algorithm is better than a cubic-time one.)
 
-\begin{proof}
-    We prove the claim for addition of two functions.
-    Pick $B_1,B_2, b_1, b_2$ such that \[
-      |f_i(x)| \leq B_i\cdot |g_i(x)| \qquad\text{for all $x>b_i, i \in\{1,2\}$}\,.
-    \]
-    Set $B=\max\{B_1, B_2\}$ and $b=\max\{b_1, b_2\}$.
-    Then for $x>b$, 
-    \begin{multline*}
-      |(f_1+f_2)(x)| =
-      |f_1(x)+f_2(x)| \leq
-      |f_1(x)| + |f_2(x)| \leq\\
-      B_1|g_1(x)| + B_2|g_2(x)| \leq
-      B|g_1(x)| + B|g_2(x)| =\\
-      B(|g_1(x)| + |g_2(x)|) =
-      B(g_1(x) + g_2(x)) =
-      B(g_1 + g_2)(x)\,.
-    \end{multline*}
-  \end{proof}
-
-
-
-\begin{theorem}[Logarithm]
-  \label{prop: log big Oh}
-  Assume that $f(x)=O(g(x))$ and $\lim g(x)=\infty$.
-  Then $\log f(x) \sim \log g(x)$.
-  In particular, $\log f(x)= O(\log g(x))$.
-\end{theorem} 
-
-\begin{proof}
-  Choose $B$ and $b$ such that $|f(x)| \leq |g(x)|$ for $x> b$.
-  Then \begin{multline*}
-    \lim \frac{\log f(x)}{\log g(x)} = \lim \frac{\log |f(x)|}{\log |g(x)|} \leq \lim \frac{\log( B\cdot |g(x)|)}{\log |g(x)|}
-    = \\
-    \lim \frac{(\log B) + \log |g(x)|}{\log |g(x)|}=
-    1 + \lim {B}{|g(x)|} = 1\,.
-  \end{multline*}
-\end{proof}
-
-\medskip
-Recall that we want to be able to make `intuitively obvious' claims like \(\frac{1}{2}n = O(n) \) and  \(n^2=O(n^3)\), but none of the rules so far make that easy.
-The reason we call this `intuitively obvious' is that we all know that the cube grows faster than the square  – for instance,  \(10^2< 10^3\) – but note that for instance \((-2)^2 > (-2)^3\) and even \((\frac{1}{2})^2 > (\frac{1}{2})^3\), so the claim holds only for large enough \(n\); in this case, for \(n\geq 1\).
-Also note that \(-n^2 \leq - n\) for positive \(n\) but  \( -n^2\) is not \(O(-n) \), so cleary we have to be careful.
-
-Here is the tool we're after:
-
-\begin{theorem}[Domination]\label{prop: D}
-  Assume
-  \begin{enumerate}
-    \item\(f\) is eventually\footnote{
-	Speakers of Germanic languages (such as Danish) beware: 
-	``eventually'' does not mean ``\emph{eventuell}'' (as in possibly).
-	It means sooner or later, but certainly.
-      }at most \(g\), i.e.,  if there exists \(b\) such that  \(f(x) \leq g(x)\) for \(x\geq b\),
-    \item \(g\) is eventually positive, i.e., there exists \(b'\) such that \(g(x) \geq 0\)  for \(x\geq b'\). 
-  \end{enumerate}
-  Then \(f= O(g)\).
-\end{theorem}
-
-\begin{proof} 
-  For \( x\geq \max(b, b') \), we have 
-  \( |f(x)| = f(x) \leq g(x) \leq |g(x)| \). 
-\end{proof} 
- 
-Let's apply this to some functions that frequently appear in the analysis of algorithms:
-
-\begin{theorem}[ln versus linear]
-\(\ln n  = O(n)\).
-\end{theorem}
-
-\begin{proof}
-  We will use Propostion~\ref{prop: D}.
-  The logarithm is positive for \(n> 0\).
-  We want to show \(\ln n \leq n\) for large enough \(n\), say \(n\geq 1\).
-  But that is just calculus. 
-  First, for \(n=  1\) we have \(\ln n \leq n\).
-  Moreover, the function \(n \mapsto n-\ln n\) is nondecreasing for \(n\geq 1\) since its derivative \(1 - \frac{1}{n}> 0\) is nonnegative.
-\end{proof}
-
-
-\begin{theorem}[power functions]
-  Let \(a \leq b\). Then \(n^a = O(n^b)\).
-\end{theorem}
-
-\begin{proof}
-  It suffices to show that for  \(n \geq 0\) we have \(n^a \leq n^b\); then we can use Proposition~\ref{prop: D}.
-  We need to show that the difference \(n^b - n^a\) is nonnegative. 
-  Again, we use elementary calculus.
-  The difference is zero for  \(n= 1\), and it is nondecreasing since its derivative \(b- a\geq 0\) is nonnegative. 
-\end{proof}
-
-The above results give us an alternative proof for $a_kx^k +\cdots + a_1x + a_0 =O(x^k)$.
-(For $r\leq k$, bound the $r$th term as $a_rx^r = O(x^k)$, then apply additivity $k$ times.)
-
-
-\bigskip
 
 \subsection{Big Oh as a limit}
 
@@ -871,50 +901,6 @@ After all this work, we can finally establish the relationship between $\sim$ an
 We repeat that the other direction is not even close to being true: $2x =O(x)$ but $2x\not\sim x$.
 
 \medskip
-We are also finally able to say something like \(\log n = O(\sqrt{n})\).
-Such expressions appear frequently in the analysis of algorithms, for instance when comparing shellsort \(O(n^{3/2})\) to mergesort \(O(n\log n)\), or \(\sqrt{n}\)-trees to balanced binary search trees.
-
-
-\begin{theorem}[ln versus power]
-For all exponents \(a>0\), \[ \ln x = O(x^a)\,.\]
-\end{theorem}
-
-Unfortunately, I know no short and easy proof for these relationships.
-
-\begin{proof}[Proof using integrals]
-We have
-\[
-\frac{1}{y} \leq y \qquad(\text{for any } y \geq 1)\,.
-\]
-Thus, for any \(z\geq 1\),
-\[
-\int_1^z \frac{1}{y} \,dy\leq  \int_1^z y\, dy \,,
-\]
-so that \[ \ln z \leq \tfrac{1}{2} z^2\,.\]
-In particular, if we choose \(z = x^{a/2}\),
-then we have \( \ln x^{a/2} \leq \frac{1}{2} (x^{a/2})^2\), which simplifies to
-\[  \ln x \leq    x^a\qquad(x\geq 1)\,. \]
-  Now we can apply Proposition~\ref{prop: D} to conclude \(\ln n = O(x^a)\).
-\end{proof}
-
-\begin{proof}[Proof using l’Hôpital’s rule]
-We have
-\[ 
-\lim_{x\rightarrow \infty} \frac{\ln x}{ x^a} = 
- \lim_{x\rightarrow \infty} \frac{1/x}{a x^{a-1}} = 
- \lim_{x\rightarrow \infty} \frac{1}{a x^a} = 0 \,.
-\]
-In particular, the limit is bounded away from infinity.
-  Conclusion by Proposition (not yet established).
-\end{proof}
-
-\begin{theorem}[polylog versus power]
-  For all  bases \(r> 1\) and exponents \(a>0\) and \(k> 0\), \[ (\log_r x)^k = O(x^a)\,.\]
-\end{theorem}
-
-\begin{proof}
-  TODO. (Need power law.)
-\end{proof}
 
 \section{Hints and pitfalls}
 
@@ -969,8 +955,6 @@ So here are some warnings.
 To be written.
 
 The motivation is that we freely use expressions like $O(n+m)$ in the analysis of, say, graph algorihtms, but the concept of a \emph{bivariate} asymptotic notation is never defined.
-(There are a bunch of ways of doing this.
-Just do it.)
 
 
 
